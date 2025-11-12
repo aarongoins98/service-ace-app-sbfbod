@@ -344,6 +344,7 @@ export default function JobRequestFormScreen() {
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
           <Image 
@@ -401,6 +402,8 @@ export default function JobRequestFormScreen() {
               value={squareFootage}
               onChangeText={setSquareFootage}
               keyboardType="numeric"
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
             <Text style={styles.helperText}>
@@ -417,6 +420,8 @@ export default function JobRequestFormScreen() {
               value={hvacSystems}
               onChangeText={setHvacSystems}
               keyboardType="numeric"
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
             <Text style={styles.helperText}>
@@ -436,6 +441,8 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={customerFirstName}
               onChangeText={setCustomerFirstName}
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
           </View>
@@ -448,6 +455,8 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={customerLastName}
               onChangeText={setCustomerLastName}
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
           </View>
@@ -461,6 +470,8 @@ export default function JobRequestFormScreen() {
               value={phone}
               onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
               maxLength={13}
             />
@@ -476,6 +487,8 @@ export default function JobRequestFormScreen() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
           </View>
@@ -492,6 +505,8 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={streetAddress}
               onChangeText={setStreetAddress}
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
           </View>
@@ -504,6 +519,8 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={city}
               onChangeText={setCity}
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
           </View>
@@ -518,6 +535,8 @@ export default function JobRequestFormScreen() {
               onChangeText={setState}
               autoCapitalize="characters"
               maxLength={2}
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
           </View>
@@ -532,6 +551,8 @@ export default function JobRequestFormScreen() {
               onChangeText={setZipcode}
               keyboardType="numeric"
               maxLength={5}
+              returnKeyType="next"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
           </View>
@@ -550,6 +571,8 @@ export default function JobRequestFormScreen() {
               onChangeText={setJobDescription}
               multiline
               numberOfLines={4}
+              returnKeyType="default"
+              blurOnSubmit={false}
               editable={!isSubmitting}
             />
           </View>
@@ -562,6 +585,8 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={preferredDate}
               onChangeText={setPreferredDate}
+              returnKeyType="done"
+              blurOnSubmit={true}
               editable={!isSubmitting}
             />
           </View>
