@@ -13,7 +13,6 @@ import {
   Image,
   Modal,
   Keyboard,
-  findNodeHandle,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -79,9 +78,11 @@ export default function JobRequestFormScreen() {
   };
 
   const scrollToInput = (inputRef: any) => {
-    if (!inputRef || !scrollViewRef.current) return;
+    // Only execute on native platforms (iOS/Android)
+    if (Platform.OS === 'web' || !inputRef || !scrollViewRef.current) return;
 
     setTimeout(() => {
+      const { findNodeHandle } = require('react-native');
       inputRef.measureLayout(
         findNodeHandle(scrollViewRef.current),
         (x: number, y: number, width: number, height: number) => {
