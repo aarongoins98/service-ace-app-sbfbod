@@ -137,6 +137,12 @@ export default function LoginScreen() {
       isLoading
     });
 
+    // Prevent double-submission
+    if (isLoading) {
+      console.log("Already processing login, ignoring duplicate press");
+      return;
+    }
+
     // Provide haptic feedback
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -195,12 +201,12 @@ export default function LoginScreen() {
         );
       }, 500);
       
-      setIsLoading(false);
       console.log("Login process completed successfully");
     } catch (error) {
       console.error("Error during login process:", error);
-      setIsLoading(false);
       Alert.alert("Error", "Failed to save your information. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -257,12 +263,10 @@ export default function LoginScreen() {
                   <Text style={styles.loadingText}>Loading companies...</Text>
                 </View>
               ) : (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.pickerButton,
-                    pressed && styles.pickerButtonPressed
-                  ]}
+                <TouchableOpacity
+                  style={styles.pickerButton}
                   onPress={handleOpenCompanyPicker}
+                  activeOpacity={0.7}
                 >
                   <Text style={[styles.pickerButtonText, !companyName && styles.pickerPlaceholder]}>
                     {companyName || "Select a company"}
@@ -273,7 +277,7 @@ export default function LoginScreen() {
                     size={20} 
                     color={colors.textSecondary} 
                   />
-                </Pressable>
+                </TouchableOpacity>
               )}
             </View>
 
@@ -341,14 +345,14 @@ export default function LoginScreen() {
               ) : null}
             </View>
 
-            <Pressable 
-              style={({ pressed }) => [
+            <TouchableOpacity 
+              style={[
                 styles.loginButton,
-                isLoading && styles.loginButtonDisabled,
-                pressed && !isLoading && styles.loginButtonPressed
+                isLoading && styles.loginButtonDisabled
               ]}
               onPress={handleLogin}
               disabled={isLoading}
+              activeOpacity={0.7}
             >
               {isLoading ? (
                 <View style={styles.buttonContent}>
@@ -358,7 +362,7 @@ export default function LoginScreen() {
               ) : (
                 <Text style={styles.loginButtonText}>Save & Continue</Text>
               )}
-            </Pressable>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.infoBox}>
@@ -600,10 +604,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  loginButtonPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
-  },
   loginButtonDisabled: {
     opacity: 0.6,
   },
@@ -657,9 +657,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  pickerButtonPressed: {
-    opacity: 0.7,
   },
   pickerButtonText: {
     fontSize: 16,
