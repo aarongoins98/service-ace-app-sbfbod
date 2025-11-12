@@ -35,6 +35,7 @@ export default function LoginScreen() {
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(true);
   const [companyName, setCompanyName] = useState("");
   const [showCompanyPicker, setShowCompanyPicker] = useState(false);
+  const [companySearchQuery, setCompanySearchQuery] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -69,6 +70,11 @@ export default function LoginScreen() {
       setIsLoadingCompanies(false);
     }
   };
+
+  // Filter companies based on search query
+  const filteredCompanies = companies.filter((company) =>
+    company.name.toLowerCase().includes(companySearchQuery.toLowerCase())
+  );
 
   const capitalizeFirstLetter = (text: string): string => {
     if (!text) return text;
@@ -169,6 +175,21 @@ export default function LoginScreen() {
     }
   };
 
+  const handleOpenCompanyPicker = () => {
+    setCompanySearchQuery("");
+    setShowCompanyPicker(true);
+  };
+
+  const handleCloseCompanyPicker = () => {
+    setShowCompanyPicker(false);
+    setCompanySearchQuery("");
+  };
+
+  const handleSelectCompany = (company: Company) => {
+    setCompanyName(company.name);
+    handleCloseCompanyPicker();
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <KeyboardAvoidingView 
@@ -206,7 +227,7 @@ export default function LoginScreen() {
               ) : (
                 <TouchableOpacity
                   style={styles.pickerButton}
-                  onPress={() => setShowCompanyPicker(true)}
+                  onPress={handleOpenCompanyPicker}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.pickerButtonText, !companyName && styles.pickerPlaceholder]}>
@@ -317,14 +338,19 @@ export default function LoginScreen() {
         visible={showCompanyPicker}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowCompanyPicker(false)}
+        onRequestClose={handleCloseCompanyPicker}
       >
         <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={styles.modalOverlayTouchable}
+            activeOpacity={1}
+            onPress={handleCloseCompanyPicker}
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Company</Text>
               <TouchableOpacity 
-                onPress={() => setShowCompanyPicker(false)}
+                onPress={handleCloseCompanyPicker}
                 style={styles.modalCloseButton}
               >
                 <IconSymbol 
@@ -336,56 +362,107 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.modalList}>
-              {companies.length === 0 ? (
+            {/* Search Input */}
+            <View style={styles.searchContainer}>
+              <IconSymbol 
+                ios_icon_name="magnifyingglass" 
+                android_material_icon_name="search" 
+                size={20} 
+                color={colors.textSecondary} 
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search companies..."
+                placeholderTextColor={colors.textSecondary}
+                value={companySearchQuery}
+                onChangeText={setCompanySearchQuery}
+                autoFocus={true}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {companySearchQuery.length > 0 && (
+                <TouchableOpacity 
+                  onPress={() => setCompanySearchQuery("")}
+                  style={styles.clearSearchButton}
+                >
+                  <IconSymbol 
+                    ios_icon_name="xmark.circle.fill" 
+                    android_material_icon_name="cancel" 
+                    size={20} 
+                    color={colors.textSecondary} 
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <ScrollView 
+              style={styles.modalList}
+              keyboardShouldPersistTaps="handled"
+            >
+              {filteredCompanies.length === 0 ? (
                 <View style={styles.emptyCompanies}>
                   <IconSymbol 
-                    ios_icon_name="building.2" 
-                    android_material_icon_name="business" 
+                    ios_icon_name={companySearchQuery ? "magnifyingglass" : "building.2"} 
+                    android_material_icon_name={companySearchQuery ? "search_off" : "business"} 
                     size={48} 
                     color={colors.textSecondary} 
                   />
-                  <Text style={styles.emptyText}>No companies available</Text>
-                  <Text style={styles.emptySubtext}>Contact your administrator to add companies</Text>
+                  <Text style={styles.emptyText}>
+                    {companySearchQuery ? "No companies found" : "No companies available"}
+                  </Text>
+                  <Text style={styles.emptySubtext}>
+                    {companySearchQuery 
+                      ? `No results for "${companySearchQuery}"`
+                      : "Contact your administrator to add companies"
+                    }
+                  </Text>
                 </View>
               ) : (
-                companies.map((company) => (
-                  <TouchableOpacity
-                    key={company.id}
-                    style={[
-                      styles.companyOption,
-                      companyName === company.name && styles.companyOptionSelected
-                    ]}
-                    onPress={() => {
-                      setCompanyName(company.name);
-                      setShowCompanyPicker(false);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <IconSymbol 
-                      ios_icon_name="building.2.fill" 
-                      android_material_icon_name="business" 
-                      size={20} 
-                      color={companyName === company.name ? colors.primary : colors.textSecondary} 
-                    />
-                    <Text style={[
-                      styles.companyOptionText,
-                      companyName === company.name && styles.companyOptionTextSelected
-                    ]}>
-                      {company.name}
-                    </Text>
-                    {companyName === company.name && (
+                <React.Fragment>
+                  {filteredCompanies.map((company) => (
+                    <TouchableOpacity
+                      key={company.id}
+                      style={[
+                        styles.companyOption,
+                        companyName === company.name && styles.companyOptionSelected
+                      ]}
+                      onPress={() => handleSelectCompany(company)}
+                      activeOpacity={0.7}
+                    >
                       <IconSymbol 
-                        ios_icon_name="checkmark.circle.fill" 
-                        android_material_icon_name="check_circle" 
-                        size={24} 
-                        color={colors.primary} 
+                        ios_icon_name="building.2.fill" 
+                        android_material_icon_name="business" 
+                        size={20} 
+                        color={companyName === company.name ? colors.primary : colors.textSecondary} 
                       />
-                    )}
-                  </TouchableOpacity>
-                ))
+                      <Text style={[
+                        styles.companyOptionText,
+                        companyName === company.name && styles.companyOptionTextSelected
+                      ]}>
+                        {company.name}
+                      </Text>
+                      {companyName === company.name && (
+                        <IconSymbol 
+                          ios_icon_name="checkmark.circle.fill" 
+                          android_material_icon_name="check_circle" 
+                          size={24} 
+                          color={colors.primary} 
+                        />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </React.Fragment>
               )}
             </ScrollView>
+
+            {/* Results count */}
+            {companySearchQuery.length > 0 && filteredCompanies.length > 0 && (
+              <View style={styles.resultsCount}>
+                <Text style={styles.resultsCountText}>
+                  {filteredCompanies.length} {filteredCompanies.length === 1 ? 'company' : 'companies'} found
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -543,11 +620,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
+  modalOverlayTouchable: {
+    flex: 1,
+  },
   modalContent: {
     backgroundColor: colors.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '70%',
+    maxHeight: '80%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
   },
   modalHeader: {
@@ -555,6 +635,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -566,8 +647,32 @@ const styles = StyleSheet.create({
   modalCloseButton: {
     padding: 4,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 12,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    padding: 0,
+  },
+  clearSearchButton: {
+    padding: 4,
+  },
   modalList: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
   companyOption: {
     flexDirection: 'row',
@@ -608,6 +713,20 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  resultsCount: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
+  },
+  resultsCountText: {
+    fontSize: 13,
+    fontWeight: '500',
     color: colors.textSecondary,
     textAlign: 'center',
   },
