@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
 import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
+import { supabase } from "@/app/integrations/supabase/client";
 
 const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25340159/u8h7rt7/";
 
@@ -281,13 +282,14 @@ export default function JobRequestFormScreen() {
     console.log(JSON.stringify(jobData, null, 2));
     console.log("=== END JOB REQUEST DATA ===");
 
-    // Send to Zapier webhook
+    // Send to Zapier webhook and Supabase email function
     setIsSubmitting(true);
     console.log("Sending to Zapier webhook:", ZAPIER_WEBHOOK_URL);
     
     try {
-      console.log("Making fetch request...");
-      const response = await fetch(ZAPIER_WEBHOOK_URL, {
+      // Send to Zapier webhook
+      console.log("Making fetch request to Zapier...");
+      const zapierResponse = await fetch(ZAPIER_WEBHOOK_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -295,36 +297,59 @@ export default function JobRequestFormScreen() {
         body: JSON.stringify(jobData),
       });
       
-      console.log("Response received:");
-      console.log("Status:", response.status);
-      console.log("Status Text:", response.statusText);
-      console.log("OK:", response.ok);
+      console.log("Zapier Response received:");
+      console.log("Status:", zapierResponse.status);
+      console.log("Status Text:", zapierResponse.statusText);
+      console.log("OK:", zapierResponse.ok);
       
       // Try to read response body
-      let responseText = "";
+      let zapierResponseText = "";
       try {
-        responseText = await response.text();
-        console.log("Response Body:", responseText);
+        zapierResponseText = await zapierResponse.text();
+        console.log("Zapier Response Body:", zapierResponseText);
       } catch (textError) {
-        console.log("Could not read response text:", textError);
+        console.log("Could not read Zapier response text:", textError);
       }
       
-      if (response.ok) {
+      if (!zapierResponse.ok) {
+        console.error('❌ Zapier webhook returned error');
+        console.error('Status:', zapierResponse.status);
+        console.error('Response:', zapierResponseText);
+      } else {
         console.log('✅ Successfully sent to Zapier');
-        // Show thank you modal
+      }
+
+      // Send email via Supabase Edge Function
+      console.log("Sending email via Supabase Edge Function...");
+      const { data: emailData, error: emailError } = await supabase.functions.invoke(
+        'send-job-request-email',
+        {
+          body: jobData,
+        }
+      );
+
+      if (emailError) {
+        console.error('❌ Error sending email:', emailError);
+        console.error('Email error details:', JSON.stringify(emailError, null, 2));
+        // Don't fail the whole submission if email fails
+        console.log('⚠️ Email failed but continuing with submission');
+      } else {
+        console.log('✅ Email sent successfully:', emailData);
+      }
+
+      // Show success modal regardless of email status (as long as Zapier succeeded)
+      if (zapierResponse.ok) {
+        console.log('✅ Job request submitted successfully');
         setShowThankYouModal(true);
       } else {
-        console.error('❌ Zapier webhook returned error');
-        console.error('Status:', response.status);
-        console.error('Response:', responseText);
         Alert.alert(
           "Submission Error",
-          `There was an issue submitting the job request (Status: ${response.status}). Please try again or contact support.`,
+          `There was an issue submitting the job request (Status: ${zapierResponse.status}). Please try again or contact support.`,
           [{ text: "OK" }]
         );
       }
     } catch (error) {
-      console.error('❌ Error sending to Zapier:');
+      console.error('❌ Error during submission:');
       console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
       console.error('Error message:', error instanceof Error ? error.message : String(error));
       console.error('Full error:', error);
