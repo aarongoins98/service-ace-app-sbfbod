@@ -36,6 +36,7 @@ export default function ProfileScreen() {
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [profilePictureUri, setProfilePictureUri] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -83,14 +84,45 @@ export default function ProfileScreen() {
     }
   };
 
+  const capitalizeFirstLetter = (text: string): string => {
+    if (!text) return text;
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  const handleFirstNameChange = (text: string) => {
+    const capitalized = capitalizeFirstLetter(text);
+    setFirstName(capitalized);
+  };
+
+  const handleLastNameChange = (text: string) => {
+    const capitalized = capitalizeFirstLetter(text);
+    setLastName(capitalized);
+  };
+
   const handlePhoneChange = (text: string) => {
     const formatted = formatPhoneNumber(text);
     setPhoneNumber(formatted);
   };
 
   const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Enhanced email validation regex
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
+  };
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    // Clear error when user starts typing
+    if (emailError) {
+      setEmailError("");
+    }
+  };
+
+  const handleEmailBlur = () => {
+    // Validate email when user leaves the field
+    if (email && !validateEmail(email)) {
+      setEmailError("Invalid email format. Please use format: xxx@xxx.xx");
+    }
   };
 
   const validatePhone = (phone: string) => {
@@ -105,7 +137,11 @@ export default function ProfileScreen() {
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      setEmailError("Invalid email format. Please use format: xxx@xxx.xx");
+      Alert.alert(
+        "Invalid Email Format", 
+        "The email address appears to be fake or incorrectly formatted. Please enter a valid email address in the format: xxx@xxx.xx\n\nExample: technician@company.com"
+      );
       return;
     }
 
@@ -128,6 +164,7 @@ export default function ProfileScreen() {
       await saveUserData(updatedData);
       setUserData(updatedData);
       setIsEditing(false);
+      setEmailError("");
       
       Alert.alert(
         "Success", 
@@ -159,6 +196,7 @@ export default function ProfileScreen() {
       setEmail(userData.email);
       setProfilePictureUri(userData.profilePictureUri);
     }
+    setEmailError("");
     setIsEditing(false);
   };
 
@@ -299,7 +337,7 @@ export default function ProfileScreen() {
                   <TextInput
                     style={styles.input}
                     value={firstName}
-                    onChangeText={setFirstName}
+                    onChangeText={handleFirstNameChange}
                     placeholder="First name"
                     placeholderTextColor={colors.textSecondary}
                   />
@@ -310,7 +348,7 @@ export default function ProfileScreen() {
                   <TextInput
                     style={styles.input}
                     value={lastName}
-                    onChangeText={setLastName}
+                    onChangeText={handleLastNameChange}
                     placeholder="Last name"
                     placeholderTextColor={colors.textSecondary}
                   />
@@ -332,14 +370,26 @@ export default function ProfileScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Email Address</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, emailError ? styles.inputError : null]}
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={handleEmailChange}
+                    onBlur={handleEmailBlur}
                     placeholder="Email address"
                     placeholderTextColor={colors.textSecondary}
                     keyboardType="email-address"
                     autoCapitalize="none"
                   />
+                  {emailError ? (
+                    <View style={styles.errorContainer}>
+                      <IconSymbol 
+                        ios_icon_name="exclamationmark.triangle.fill" 
+                        android_material_icon_name="warning" 
+                        size={16} 
+                        color={colors.error} 
+                      />
+                      <Text style={styles.errorText}>{emailError}</Text>
+                    </View>
+                  ) : null}
                 </View>
 
                 <View style={styles.buttonRow}>
@@ -607,6 +657,21 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: colors.text,
+  },
+  inputError: {
+    borderColor: colors.error,
+    borderWidth: 2,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.error,
+    fontWeight: '500',
   },
   buttonRow: {
     flexDirection: 'row',

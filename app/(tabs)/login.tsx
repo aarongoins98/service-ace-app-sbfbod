@@ -28,7 +28,23 @@ export default function LoginScreen() {
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const capitalizeFirstLetter = (text: string): string => {
+    if (!text) return text;
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  const handleFirstNameChange = (text: string) => {
+    const capitalized = capitalizeFirstLetter(text);
+    setFirstName(capitalized);
+  };
+
+  const handleLastNameChange = (text: string) => {
+    const capitalized = capitalizeFirstLetter(text);
+    setLastName(capitalized);
+  };
 
   const handlePhoneChange = (text: string) => {
     const formatted = formatPhoneNumber(text);
@@ -36,8 +52,24 @@ export default function LoginScreen() {
   };
 
   const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Enhanced email validation regex
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
+  };
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    // Clear error when user starts typing
+    if (emailError) {
+      setEmailError("");
+    }
+  };
+
+  const handleEmailBlur = () => {
+    // Validate email when user leaves the field
+    if (email && !validateEmail(email)) {
+      setEmailError("Invalid email format. Please use format: xxx@xxx.xx");
+    }
   };
 
   const validatePhone = (phone: string) => {
@@ -53,7 +85,11 @@ export default function LoginScreen() {
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      setEmailError("Invalid email format. Please use format: xxx@xxx.xx");
+      Alert.alert(
+        "Invalid Email Format", 
+        "The email address appears to be fake or incorrectly formatted. Please enter a valid email address in the format: xxx@xxx.xx\n\nExample: technician@company.com"
+      );
       return;
     }
 
@@ -144,8 +180,7 @@ export default function LoginScreen() {
                 placeholder="Enter first name"
                 placeholderTextColor={colors.textSecondary}
                 value={firstName}
-                onChangeText={setFirstName}
-                autoCapitalize="words"
+                onChangeText={handleFirstNameChange}
               />
             </View>
 
@@ -156,8 +191,7 @@ export default function LoginScreen() {
                 placeholder="Enter last name"
                 placeholderTextColor={colors.textSecondary}
                 value={lastName}
-                onChangeText={setLastName}
-                autoCapitalize="words"
+                onChangeText={handleLastNameChange}
               />
             </View>
 
@@ -177,14 +211,26 @@ export default function LoginScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email Address *</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, emailError ? styles.inputError : null]}
                 placeholder="technician@company.com"
                 placeholderTextColor={colors.textSecondary}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={handleEmailChange}
+                onBlur={handleEmailBlur}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
+              {emailError ? (
+                <View style={styles.errorContainer}>
+                  <IconSymbol 
+                    ios_icon_name="exclamationmark.triangle.fill" 
+                    android_material_icon_name="warning" 
+                    size={16} 
+                    color={colors.error} 
+                  />
+                  <Text style={styles.errorText}>{emailError}</Text>
+                </View>
+              ) : null}
             </View>
 
             <TouchableOpacity 
@@ -277,6 +323,21 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
     color: colors.text,
+  },
+  inputError: {
+    borderColor: colors.error,
+    borderWidth: 2,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.error,
+    fontWeight: '500',
   },
   divider: {
     height: 1,
