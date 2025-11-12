@@ -36,6 +36,7 @@ export default function JobRequestFormScreen() {
   // Property Information
   const [squareFootage, setSquareFootage] = useState("");
   const [hvacSystems, setHvacSystems] = useState("");
+  const [selectedService, setSelectedService] = useState<"duct_cleaning" | "duct_clean_seal">("duct_cleaning");
   
   // Customer Information
   const [customerFirstName, setCustomerFirstName] = useState("");
@@ -233,6 +234,7 @@ export default function JobRequestFormScreen() {
         squareFootage: sqFt,
         additionalHvacSystems: hvacCount,
         totalHvacSystems: hvacCount + 1,
+        serviceType: selectedService === "duct_cleaning" ? "Duct Cleaning" : "Duct Clean & Seal",
       },
       
       // Customer Information
@@ -369,6 +371,7 @@ export default function JobRequestFormScreen() {
     console.log("Resetting form");
     setSquareFootage("");
     setHvacSystems("");
+    setSelectedService("duct_cleaning");
     setCustomerFirstName("");
     setCustomerLastName("");
     setPhone("");
@@ -520,6 +523,39 @@ export default function JobRequestFormScreen() {
             <Text style={styles.helperText}>
               Enter 0 if only 1 HVAC system
             </Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Service Type *</Text>
+            <View style={styles.checkboxContainer}>
+              <TouchableOpacity
+                style={styles.checkboxOption}
+                onPress={() => setSelectedService("duct_cleaning")}
+                activeOpacity={0.7}
+                disabled={isSubmitting}
+              >
+                <View style={styles.checkbox}>
+                  {selectedService === "duct_cleaning" && (
+                    <View style={styles.checkboxInner} />
+                  )}
+                </View>
+                <Text style={styles.checkboxLabel}>Duct Cleaning</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.checkboxOption}
+                onPress={() => setSelectedService("duct_clean_seal")}
+                activeOpacity={0.7}
+                disabled={isSubmitting}
+              >
+                <View style={styles.checkbox}>
+                  {selectedService === "duct_clean_seal" && (
+                    <View style={styles.checkboxInner} />
+                  )}
+                </View>
+                <Text style={styles.checkboxLabel}>Duct Clean & Seal</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.divider} />
@@ -961,6 +997,36 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  checkboxContainer: {
+    gap: 12,
+  },
+  checkboxOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  checkboxInner: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.primary,
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '500',
   },
   divider: {
     height: 1,
