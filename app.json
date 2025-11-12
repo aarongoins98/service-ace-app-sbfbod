@@ -30,7 +30,12 @@
     },
     "web": {
       "favicon": "./assets/images/0632746b-9d1e-4872-9744-4e93c2f862d1.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "meta": {
+        "title": "Refresh Booking Tool",
+        "description": "Professional HVAC service booking and pricing tool",
+        "image": "./assets/images/0632746b-9d1e-4872-9744-4e93c2f862d1.png"
+      }
     },
     "plugins": [
       "expo-font",
