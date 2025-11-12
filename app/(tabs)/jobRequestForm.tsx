@@ -510,19 +510,6 @@ export default function JobRequestFormScreen() {
             <Text style={styles.technicianSectionTitle}>YOUR INFORMATION (PRE-FILLED)</Text>
           </View>
           <View style={styles.technicianBanner}>
-            {technicianInfo.profilePictureUri ? (
-              <Image 
-                source={{ uri: technicianInfo.profilePictureUri }} 
-                style={styles.profilePicture}
-              />
-            ) : (
-              <IconSymbol 
-                ios_icon_name="person.crop.circle.fill" 
-                android_material_icon_name="account_circle" 
-                size={56} 
-                color={colors.primary} 
-              />
-            )}
             <View style={styles.technicianInfo}>
               <View style={styles.technicianInfoRow}>
                 <IconSymbol 
@@ -652,12 +639,6 @@ export default function JobRequestFormScreen() {
           {/* Customer Information Section with Clear Notice */}
           <View style={styles.customerSectionHeader}>
             <View style={styles.customerHeaderTop}>
-              <IconSymbol 
-                ios_icon_name="person.crop.square.fill" 
-                android_material_icon_name="contact_page" 
-                size={24} 
-                color={colors.secondary} 
-              />
               <Text style={styles.sectionTitle}>Customer Information</Text>
             </View>
             <View style={styles.customerNotice}>
