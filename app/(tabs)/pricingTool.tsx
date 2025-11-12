@@ -15,6 +15,7 @@ import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 // Pricing Configuration
 // You can easily update these values to adjust pricing
@@ -175,6 +176,7 @@ const PRICING_CONFIG = {
 
 export default function PricingToolScreen() {
   const theme = useTheme();
+  const router = useRouter();
   
   const [squareFootage, setSquareFootage] = useState("");
   const [hvacSystems, setHvacSystems] = useState("");
@@ -303,6 +305,23 @@ export default function PricingToolScreen() {
     if (!range) return "Unknown range";
     if (range.max === Infinity) return `${range.min}+ sqft`;
     return `${range.min}-${range.max} sqft`;
+  };
+
+  const handleRequestJob = (serviceType: 'duct-cleaning' | 'clean-and-seal') => {
+    console.log('Navigating to job request form with:', {
+      squareFootage,
+      hvacSystems,
+      serviceType,
+    });
+
+    router.push({
+      pathname: '/(tabs)/jobRequestForm',
+      params: {
+        squareFootage,
+        hvacSystems,
+        serviceType,
+      },
+    });
   };
 
   return (
@@ -471,6 +490,21 @@ export default function PricingToolScreen() {
                 </View>
               </View>
 
+              {/* Submit Job Request Button for Duct Cleaning */}
+              <TouchableOpacity 
+                style={styles.requestJobButton} 
+                onPress={() => handleRequestJob('duct-cleaning')}
+                activeOpacity={0.8}
+              >
+                <IconSymbol 
+                  ios_icon_name="paperplane.fill" 
+                  android_material_icon_name="send" 
+                  size={20} 
+                  color="#ffffff" 
+                />
+                <Text style={styles.requestJobButtonText}>Request Duct Cleaning Job</Text>
+              </TouchableOpacity>
+
               {/* Clean & Seal Quote Section */}
               <View style={styles.cleanAndSealContainer}>
                 <View style={styles.cleanAndSealHeader}>
@@ -513,6 +547,21 @@ export default function PricingToolScreen() {
                   }
                 </Text>
               </View>
+
+              {/* Submit Job Request Button for Clean & Seal */}
+              <TouchableOpacity 
+                style={styles.requestJobButtonSecondary} 
+                onPress={() => handleRequestJob('clean-and-seal')}
+                activeOpacity={0.8}
+              >
+                <IconSymbol 
+                  ios_icon_name="paperplane.fill" 
+                  android_material_icon_name="send" 
+                  size={20} 
+                  color={colors.accent} 
+                />
+                <Text style={styles.requestJobButtonSecondaryText}>Request Clean & Seal Job</Text>
+              </TouchableOpacity>
 
               <Text style={styles.quoteNote}>
                 This is an estimated quote based on the provided information
@@ -730,6 +779,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
   },
+  requestJobButton: {
+    backgroundColor: colors.secondary,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  requestJobButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   cleanAndSealContainer: {
     width: '100%',
     backgroundColor: colors.card,
@@ -791,6 +857,25 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  requestJobButtonSecondary: {
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.accent,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  requestJobButtonSecondaryText: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '600',
   },
   quoteNote: {
     fontSize: 12,
