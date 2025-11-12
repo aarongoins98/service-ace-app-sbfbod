@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
+  Image,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -71,11 +72,10 @@ export default function AdminLoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <IconSymbol 
-              ios_icon_name="lock.shield.fill" 
-              android_material_icon_name="admin_panel_settings" 
-              size={72} 
-              color={colors.primary} 
+            <Image 
+              source={require('@/assets/images/a078dd88-e996-4ae7-a894-90dfc7c624dc.png')}
+              style={styles.logo}
+              resizeMode="contain"
             />
             <Text style={styles.title}>Admin Login</Text>
             <Text style={styles.subtitle}>
@@ -105,14 +105,8 @@ export default function AdminLoginScreen() {
               activeOpacity={0.8}
               disabled={isLoading}
             >
-              <IconSymbol 
-                ios_icon_name="arrow.right.circle.fill" 
-                android_material_icon_name="login" 
-                size={20} 
-                color="#ffffff" 
-              />
               <Text style={styles.loginButtonText}>
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "Logging in..." : "Admin Login"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -151,6 +145,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 40,
+  },
+  logo: {
+    width: 200,
+    height: 100,
+    marginBottom: 16,
   },
   title: {
     fontSize: 32,
@@ -197,9 +196,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
   },
   loginButtonDisabled: {
     opacity: 0.6,

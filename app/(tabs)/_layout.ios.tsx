@@ -19,7 +19,7 @@ export default function TabLayout() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger key="profile" name="profile">
         <Icon sf="person.fill" />
-        <Label>Profile</Label>
+        <Label>Admin</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
