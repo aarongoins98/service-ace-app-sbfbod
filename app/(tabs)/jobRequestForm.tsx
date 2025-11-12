@@ -20,9 +20,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
 import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
-import { supabase } from "@/app/integrations/supabase/client";
 
 const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25340159/u8h7rt7/";
+const SUPABASE_URL = "https://vvqlpbydvugqrbeftckc.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2cWxwYnlkdnVncXJiZWZ0Y2tjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5MTU1OTksImV4cCI6MjA3ODQ5MTU5OX0.qo3MERO4p1H7eLpkV5_OiWMBM1OdbFKpw-10wo8rIuU";
 
 export default function JobRequestFormScreen() {
   const theme = useTheme();
@@ -330,22 +331,40 @@ export default function JobRequestFormScreen() {
         console.error('Zapier error details:', zapierError instanceof Error ? zapierError.message : String(zapierError));
       }
 
-      // Send email via Supabase Edge Function (without JWT - will be handled by the function)
+      // Send email via Supabase Edge Function using direct fetch
       console.log("Sending email via Supabase Edge Function...");
       try {
-        const { data: emailData, error: emailError } = await supabase.functions.invoke(
-          'send-job-request-email',
+        const emailResponse = await fetch(
+          `${SUPABASE_URL}/functions/v1/send-job-request-email`,
           {
-            body: jobData,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify(jobData),
           }
         );
 
-        if (emailError) {
-          console.error('❌ Error sending email:', emailError);
-          console.error('Email error details:', JSON.stringify(emailError, null, 2));
+        console.log("Email Response received:");
+        console.log("Status:", emailResponse.status);
+        console.log("Status Text:", emailResponse.statusText);
+        console.log("OK:", emailResponse.ok);
+
+        let emailResponseData;
+        try {
+          const emailResponseText = await emailResponse.text();
+          console.log("Email Response Body:", emailResponseText);
+          emailResponseData = JSON.parse(emailResponseText);
+        } catch (parseError) {
+          console.log("Could not parse email response:", parseError);
+        }
+
+        if (!emailResponse.ok) {
+          console.error('❌ Error sending email:', emailResponseData);
           console.log('⚠️ Email failed but continuing with submission');
         } else {
-          console.log('✅ Email sent successfully:', emailData);
+          console.log('✅ Email sent successfully:', emailResponseData);
           emailSuccess = true;
         }
       } catch (emailError) {
@@ -354,19 +373,25 @@ export default function JobRequestFormScreen() {
         console.log('⚠️ Email failed but continuing with submission');
       }
 
-      // Show success if at least Zapier succeeded
-      if (zapierSuccess) {
-        console.log('✅ Job request submitted successfully to Zapier');
-        if (!emailSuccess) {
-          console.log('⚠️ Note: Email notification may not have been sent');
+      // Show success if at least Zapier succeeded OR email succeeded
+      if (zapierSuccess || emailSuccess) {
+        console.log('✅ Job request submitted successfully');
+        console.log('Zapier Success:', zapierSuccess);
+        console.log('Email Success:', emailSuccess);
+        
+        if (!zapierSuccess && emailSuccess) {
+          console.log('⚠️ Note: Zapier submission may not have succeeded, but email was sent');
+        } else if (zapierSuccess && !emailSuccess) {
+          console.log('⚠️ Note: Email notification may not have been sent, but Zapier succeeded');
         }
+        
         setShowThankYouModal(true);
       } else {
-        // If Zapier failed, show error
-        console.error('❌ Zapier submission failed');
+        // Both failed
+        console.error('❌ Both Zapier and Email submissions failed');
         Alert.alert(
           "Submission Error",
-          "There was an issue submitting the job request to Zapier. Please try again or contact support.\n\nIf the problem persists, you can manually send the information to agoins@refreshductcleaning.com",
+          "There was an issue submitting the job request. Both Zapier and email delivery failed. Please try again or contact support.\n\nIf the problem persists, you can manually send the information to agoins@refreshductcleaning.com",
           [{ text: "OK" }]
         );
       }
@@ -820,7 +845,7 @@ export default function JobRequestFormScreen() {
             </Text>
             <View style={styles.modalDivider} />
             <Text style={styles.modalText}>
-              The information has been sent to Housecall Pro and an email notification has been sent to agoins@refreshductcleaning.com.
+              The information has been sent and an email notification has been sent to agoins@refreshductcleaning.com.
             </Text>
             <Text style={styles.modalText}>
               Refresh Duct Cleaning will reach out to the customer to schedule at our soonest availability.
