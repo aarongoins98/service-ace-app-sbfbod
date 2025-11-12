@@ -382,14 +382,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   accoladesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: 20,
+    gap: 24,
     backgroundColor: colors.card,
     borderRadius: 16,
-    padding: 24,
+    padding: 32,
     borderWidth: 1,
     borderColor: colors.border,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
@@ -398,9 +396,10 @@ const styles = StyleSheet.create({
   accoladeItem: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
   },
   accoladeImage: {
-    width: 100,
-    height: 100,
+    width: 180,
+    height: 180,
   },
 });

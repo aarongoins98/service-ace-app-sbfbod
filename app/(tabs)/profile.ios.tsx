@@ -122,7 +122,20 @@ export default function ProfileScreen() {
       await saveUserData(updatedData);
       setUserData(updatedData);
       setIsEditing(false);
-      Alert.alert("Success", "Your information has been updated.");
+      
+      Alert.alert(
+        "Success", 
+        "Your information has been updated.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              console.log("Profile saved, navigating to home");
+              router.replace("/(tabs)/(home)/");
+            }
+          }
+        ]
+      );
     } catch (error) {
       console.error("Error saving user data:", error);
       Alert.alert("Error", "Failed to save your information. Please try again.");

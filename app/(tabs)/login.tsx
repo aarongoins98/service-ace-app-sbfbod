@@ -85,7 +85,6 @@ export default function LoginScreen() {
     } catch (error) {
       console.error("Error saving user data:", error);
       Alert.alert("Error", "Failed to save your information. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };

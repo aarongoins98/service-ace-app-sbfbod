@@ -374,22 +374,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   accoladesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: 20,
+    gap: 24,
     borderRadius: 16,
-    padding: 24,
+    padding: 32,
     borderWidth: 1,
     borderColor: colors.border,
   },
   accoladeItem: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
   },
   accoladeImage: {
-    width: 100,
-    height: 100,
+    width: 180,
+    height: 180,
   },
 });
