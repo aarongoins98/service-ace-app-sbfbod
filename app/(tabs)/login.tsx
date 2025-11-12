@@ -17,6 +17,7 @@ import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { saveUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
+import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 
 export default function LoginScreen() {
   const theme = useTheme();
@@ -29,14 +30,19 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const handlePhoneChange = (text: string) => {
+    const formatted = formatPhoneNumber(text);
+    setPhoneNumber(formatted);
+  };
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
   const validatePhone = (phone: string) => {
-    const phoneRegex = /^\d{10,}$/;
-    return phoneRegex.test(phone.replace(/\D/g, ''));
+    const digits = getPhoneDigits(phone);
+    return digits.length === 10;
   };
 
   const handleLogin = async () => {
@@ -52,7 +58,7 @@ export default function LoginScreen() {
     }
 
     if (!validatePhone(phoneNumber)) {
-      Alert.alert("Invalid Phone", "Please enter a valid phone number (at least 10 digits).");
+      Alert.alert("Invalid Phone", "Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -159,11 +165,12 @@ export default function LoginScreen() {
               <Text style={styles.label}>Phone Number *</Text>
               <TextInput
                 style={styles.input}
-                placeholder="(555) 123-4567"
+                placeholder="(000)000-0000"
                 placeholderTextColor={colors.textSecondary}
                 value={phoneNumber}
-                onChangeText={setPhoneNumber}
+                onChangeText={handlePhoneChange}
                 keyboardType="phone-pad"
+                maxLength={13}
               />
             </View>
 

@@ -19,6 +19,7 @@ import { colors } from "@/styles/commonStyles";
 import { getUserData, saveUserData, clearUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
+import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -82,14 +83,19 @@ export default function ProfileScreen() {
     }
   };
 
+  const handlePhoneChange = (text: string) => {
+    const formatted = formatPhoneNumber(text);
+    setPhoneNumber(formatted);
+  };
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
   const validatePhone = (phone: string) => {
-    const phoneRegex = /^\d{10,}$/;
-    return phoneRegex.test(phone.replace(/\D/g, ''));
+    const digits = getPhoneDigits(phone);
+    return digits.length === 10;
   };
 
   const handleSave = async () => {
@@ -104,7 +110,7 @@ export default function ProfileScreen() {
     }
 
     if (!validatePhone(phoneNumber)) {
-      Alert.alert("Invalid Phone", "Please enter a valid phone number (at least 10 digits).");
+      Alert.alert("Invalid Phone", "Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -315,10 +321,11 @@ export default function ProfileScreen() {
                   <TextInput
                     style={styles.input}
                     value={phoneNumber}
-                    onChangeText={setPhoneNumber}
-                    placeholder="Phone number"
+                    onChangeText={handlePhoneChange}
+                    placeholder="(000)000-0000"
                     placeholderTextColor={colors.textSecondary}
                     keyboardType="phone-pad"
+                    maxLength={13}
                   />
                 </View>
 

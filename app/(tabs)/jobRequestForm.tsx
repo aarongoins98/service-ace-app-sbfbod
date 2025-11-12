@@ -19,6 +19,7 @@ import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
+import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 
 const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25340159/u8h7rt7/";
 
@@ -68,14 +69,19 @@ export default function JobRequestFormScreen() {
     }
   };
 
+  const handlePhoneChange = (text: string) => {
+    const formatted = formatPhoneNumber(text);
+    setPhone(formatted);
+  };
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
   const validatePhone = (phone: string) => {
-    const phoneRegex = /^\d{10,}$/;
-    return phoneRegex.test(phone.replace(/\D/g, ''));
+    const digits = getPhoneDigits(phone);
+    return digits.length === 10;
   };
 
   const handleSubmit = async () => {
@@ -146,7 +152,7 @@ export default function JobRequestFormScreen() {
 
     if (!validatePhone(phone)) {
       console.log("ERROR: Invalid phone:", phone);
-      Alert.alert("Invalid Phone", "Please enter a valid phone number (at least 10 digits).");
+      Alert.alert("Invalid Phone", "Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -450,12 +456,13 @@ export default function JobRequestFormScreen() {
             <Text style={styles.label}>Phone Number *</Text>
             <TextInput
               style={styles.input}
-              placeholder="(555) 123-4567"
+              placeholder="(000)000-0000"
               placeholderTextColor={colors.textSecondary}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
               editable={!isSubmitting}
+              maxLength={13}
             />
           </View>
 
