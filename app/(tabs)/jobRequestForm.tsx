@@ -513,8 +513,8 @@ export default function JobRequestFormScreen() {
         <View style={styles.technicianSection}>
           <View style={styles.technicianSectionHeader}>
             <IconSymbol 
-              ios_icon_name="person.badge.shield.checkmark.fill" 
-              android_material_icon_name="verified_user" 
+              ios_icon_name="person.fill" 
+              android_material_icon_name="person" 
               size={24} 
               color={colors.primary} 
             />
