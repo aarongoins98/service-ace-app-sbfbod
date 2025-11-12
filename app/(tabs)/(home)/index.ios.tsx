@@ -42,7 +42,7 @@ export default function HomeScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.title}>Refresh Booking Tool</Text>
+        <Text style={styles.title}>Refresh Pricing/Booking Tool</Text>
         <Text style={styles.subtitle}>
           The most Refreshing way to order cleaner, healthy ducts.
         </Text>

@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { 
   ScrollView, 
   StyleSheet, 
@@ -10,7 +10,6 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
-  findNodeHandle,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -20,13 +19,9 @@ import { saveUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
 import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 
-// Additional padding to ensure field is fully visible
-const SCROLL_PADDING = 20;
-
 export default function LoginScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const scrollViewRef = useRef<ScrollView>(null);
   
   const [companyName, setCompanyName] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -35,28 +30,6 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const scrollToInput = (inputRef: any) => {
-    if (!inputRef || !scrollViewRef.current) return;
-
-    setTimeout(() => {
-      inputRef.measureLayout(
-        findNodeHandle(scrollViewRef.current),
-        (x: number, y: number, width: number, height: number) => {
-          // Calculate the position to scroll to
-          const scrollToY = y - SCROLL_PADDING;
-          
-          scrollViewRef.current?.scrollTo({
-            y: scrollToY,
-            animated: true,
-          });
-        },
-        (error: any) => {
-          console.log("Error measuring input layout:", error);
-        }
-      );
-    }, 100);
-  };
 
   const capitalizeFirstLetter = (text: string): string => {
     if (!text) return text;
@@ -164,7 +137,6 @@ export default function LoginScreen() {
         style={styles.keyboardView}
       >
         <ScrollView 
-          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -193,7 +165,6 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.textSecondary}
                 value={companyName}
                 onChangeText={setCompanyName}
-                onFocus={(e) => scrollToInput(e.target)}
                 autoCapitalize="words"
               />
             </View>
@@ -210,7 +181,6 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.textSecondary}
                 value={firstName}
                 onChangeText={handleFirstNameChange}
-                onFocus={(e) => scrollToInput(e.target)}
               />
             </View>
 
@@ -222,7 +192,6 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.textSecondary}
                 value={lastName}
                 onChangeText={handleLastNameChange}
-                onFocus={(e) => scrollToInput(e.target)}
               />
             </View>
 
@@ -234,7 +203,6 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.textSecondary}
                 value={phoneNumber}
                 onChangeText={handlePhoneChange}
-                onFocus={(e) => scrollToInput(e.target)}
                 keyboardType="phone-pad"
                 maxLength={13}
               />
@@ -249,7 +217,6 @@ export default function LoginScreen() {
                 value={email}
                 onChangeText={handleEmailChange}
                 onBlur={handleEmailBlur}
-                onFocus={(e) => scrollToInput(e.target)}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />

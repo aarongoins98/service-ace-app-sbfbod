@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   ScrollView, 
   StyleSheet, 
@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   Image,
   Modal,
-  Keyboard,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -24,15 +23,9 @@ import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 
 const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25340159/u8h7rt7/";
 
-// Height of the bottom tab bar (approximate)
-const BOTTOM_TAB_BAR_HEIGHT = 100;
-// Additional padding to ensure field is fully visible
-const SCROLL_PADDING = 20;
-
 export default function JobRequestFormScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const scrollViewRef = useRef<ScrollView>(null);
   
   const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
   const [isLoadingTechnician, setIsLoadingTechnician] = useState(true);
@@ -75,31 +68,6 @@ export default function JobRequestFormScreen() {
     } finally {
       setIsLoadingTechnician(false);
     }
-  };
-
-  const scrollToInput = (inputRef: any) => {
-    // Only execute on native platforms (iOS/Android)
-    if (Platform.OS === 'web' || !inputRef || !scrollViewRef.current) return;
-
-    setTimeout(() => {
-      const { findNodeHandle } = require('react-native');
-      inputRef.measureLayout(
-        findNodeHandle(scrollViewRef.current),
-        (x: number, y: number, width: number, height: number) => {
-          // Calculate the position to scroll to
-          // We want the input to be visible above the bottom tab bar
-          const scrollToY = y - SCROLL_PADDING;
-          
-          scrollViewRef.current?.scrollTo({
-            y: scrollToY,
-            animated: true,
-          });
-        },
-        (error: any) => {
-          console.log("Error measuring input layout:", error);
-        }
-      );
-    }, 100);
   };
 
   const capitalizeFirstLetter = (text: string): string => {
@@ -442,7 +410,6 @@ export default function JobRequestFormScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView 
-        ref={scrollViewRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -502,7 +469,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={squareFootage}
               onChangeText={setSquareFootage}
-              onFocus={(e) => scrollToInput(e.target)}
               keyboardType="numeric"
               returnKeyType="next"
               blurOnSubmit={false}
@@ -521,7 +487,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={hvacSystems}
               onChangeText={setHvacSystems}
-              onFocus={(e) => scrollToInput(e.target)}
               keyboardType="numeric"
               returnKeyType="next"
               blurOnSubmit={false}
@@ -544,7 +509,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={customerFirstName}
               onChangeText={handleFirstNameChange}
-              onFocus={(e) => scrollToInput(e.target)}
               returnKeyType="next"
               blurOnSubmit={false}
               editable={!isSubmitting}
@@ -559,7 +523,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={customerLastName}
               onChangeText={handleLastNameChange}
-              onFocus={(e) => scrollToInput(e.target)}
               returnKeyType="next"
               blurOnSubmit={false}
               editable={!isSubmitting}
@@ -574,7 +537,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={phone}
               onChangeText={handlePhoneChange}
-              onFocus={(e) => scrollToInput(e.target)}
               keyboardType="phone-pad"
               returnKeyType="next"
               blurOnSubmit={false}
@@ -592,7 +554,6 @@ export default function JobRequestFormScreen() {
               value={email}
               onChangeText={handleEmailChange}
               onBlur={handleEmailBlur}
-              onFocus={(e) => scrollToInput(e.target)}
               keyboardType="email-address"
               autoCapitalize="none"
               returnKeyType="next"
@@ -624,7 +585,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={streetAddress}
               onChangeText={setStreetAddress}
-              onFocus={(e) => scrollToInput(e.target)}
               returnKeyType="next"
               blurOnSubmit={false}
               editable={!isSubmitting}
@@ -639,7 +599,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={city}
               onChangeText={setCity}
-              onFocus={(e) => scrollToInput(e.target)}
               returnKeyType="next"
               blurOnSubmit={false}
               editable={!isSubmitting}
@@ -654,7 +613,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={state}
               onChangeText={setState}
-              onFocus={(e) => scrollToInput(e.target)}
               autoCapitalize="characters"
               maxLength={2}
               returnKeyType="next"
@@ -671,7 +629,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={zipcode}
               onChangeText={setZipcode}
-              onFocus={(e) => scrollToInput(e.target)}
               keyboardType="numeric"
               maxLength={5}
               returnKeyType="next"
@@ -692,7 +649,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={jobDescription}
               onChangeText={setJobDescription}
-              onFocus={(e) => scrollToInput(e.target)}
               multiline
               numberOfLines={4}
               returnKeyType="default"
@@ -709,7 +665,6 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={preferredDate}
               onChangeText={handlePreferredDateChange}
-              onFocus={(e) => scrollToInput(e.target)}
               keyboardType="numeric"
               returnKeyType="done"
               blurOnSubmit={true}
@@ -754,7 +709,20 @@ export default function JobRequestFormScreen() {
             color={colors.accent} 
           />
           <Text style={styles.infoText}>
-            Your information and the booking information will be sent to agoins@refreshductcleaning.com
+            Your technician information will be automatically included with this job request. The data will be sent to Housecall Pro via Zapier and an email notification will be sent to agoins@refreshductcleaning.com.
+          </Text>
+        </View>
+
+        <View style={styles.debugBox}>
+          <Text style={styles.debugTitle}>🔍 Debugging Information</Text>
+          <Text style={styles.debugText}>
+            Webhook URL: {ZAPIER_WEBHOOK_URL}
+          </Text>
+          <Text style={styles.debugText}>
+            Check your console logs for detailed submission data.
+          </Text>
+          <Text style={styles.debugText}>
+            All form data and API responses are logged.
           </Text>
         </View>
       </ScrollView>
@@ -1021,6 +989,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '400',
     color: colors.textSecondary,
+    lineHeight: 18,
+  },
+  debugBox: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#0ea5e9',
+    marginBottom: 20,
+  },
+  debugTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0c4a6e',
+    marginBottom: 8,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#0c4a6e',
+    marginBottom: 4,
     lineHeight: 18,
   },
   modalOverlay: {
