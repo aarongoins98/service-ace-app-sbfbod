@@ -3,7 +3,7 @@ import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 // Refresh Duct Cleaning Brand Colors
 export const colors = {
-  background: '#f9f9f9',
+  background: '#E3F2FD', // Light blue background
   text: '#1B3A52', // Navy blue from brand
   textSecondary: '#757575',
   primary: '#1B3A52', // Navy blue - main brand color
