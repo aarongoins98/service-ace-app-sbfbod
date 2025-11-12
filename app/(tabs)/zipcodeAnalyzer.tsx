@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   ScrollView, 
   StyleSheet, 
@@ -112,26 +112,7 @@ export default function ZipcodeAnalyzerScreen() {
   const [searchZipcode, setSearchZipcode] = useState("");
   const [nearbyMissing, setNearbyMissing] = useState<number[]>([]);
 
-  useEffect(() => {
-    checkAdminSession();
-  }, []);
-
-  const checkAdminSession = async () => {
-    try {
-      const session = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
-      if (session !== "true") {
-        Alert.alert("Access Denied", "Please login as admin first.");
-        router.replace("/(tabs)/adminLogin");
-        return;
-      }
-      loadZipcodes();
-    } catch (error) {
-      console.error("Error checking admin session:", error);
-      router.replace("/(tabs)/adminLogin");
-    }
-  };
-
-  const loadZipcodes = async () => {
+  const loadZipcodes = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -153,7 +134,26 @@ export default function ZipcodeAnalyzerScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  const checkAdminSession = useCallback(async () => {
+    try {
+      const session = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
+      if (session !== "true") {
+        Alert.alert("Access Denied", "Please login as admin first.");
+        router.replace("/(tabs)/adminLogin");
+        return;
+      }
+      loadZipcodes();
+    } catch (error) {
+      console.error("Error checking admin session:", error);
+      router.replace("/(tabs)/adminLogin");
+    }
+  }, [router, loadZipcodes]);
+
+  useEffect(() => {
+    checkAdminSession();
+  }, [checkAdminSession]);
 
   const analyzeCounty = (countyName: string) => {
     const county = UTAH_ZIPCODE_RANGES[countyName];
