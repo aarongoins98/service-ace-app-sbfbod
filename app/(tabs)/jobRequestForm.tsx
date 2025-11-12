@@ -35,7 +35,8 @@ export default function JobRequestFormScreen() {
   const [zipcode, setZipcode] = useState("");
   
   // Customer information
-  const [customerName, setCustomerName] = useState("");
+  const [customerFirstName, setCustomerFirstName] = useState("");
+  const [customerLastName, setCustomerLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
@@ -97,7 +98,7 @@ export default function JobRequestFormScreen() {
     }
 
     // Validate all required inputs (same as Pricing Tool)
-    if (!squareFootage || !hvacSystems || !zipcode || !customerName || !phone || !email || !address) {
+    if (!squareFootage || !hvacSystems || !zipcode || !customerFirstName || !customerLastName || !phone || !email || !address) {
       Alert.alert("Missing Information", "Please fill in all required fields.");
       return;
     }
@@ -136,7 +137,8 @@ export default function JobRequestFormScreen() {
       },
       // Customer Information
       customer: {
-        name: customerName,
+        firstName: customerFirstName,
+        lastName: customerLastName,
         phone,
         email,
         address,
@@ -202,7 +204,8 @@ export default function JobRequestFormScreen() {
     setSquareFootage("");
     setHvacSystems("");
     setZipcode("");
-    setCustomerName("");
+    setCustomerFirstName("");
+    setCustomerLastName("");
     setPhone("");
     setEmail("");
     setAddress("");
@@ -331,13 +334,25 @@ export default function JobRequestFormScreen() {
           <Text style={styles.sectionTitle}>Customer Information</Text>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Customer Name *</Text>
+            <Text style={styles.label}>First Name *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter customer name"
+              placeholder="Enter customer first name"
               placeholderTextColor={colors.textSecondary}
-              value={customerName}
-              onChangeText={setCustomerName}
+              value={customerFirstName}
+              onChangeText={setCustomerFirstName}
+              editable={!isSubmitting}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Last Name *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter customer last name"
+              placeholderTextColor={colors.textSecondary}
+              value={customerLastName}
+              onChangeText={setCustomerLastName}
               editable={!isSubmitting}
             />
           </View>
