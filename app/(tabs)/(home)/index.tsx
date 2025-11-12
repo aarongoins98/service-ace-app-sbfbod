@@ -54,7 +54,7 @@ export default function HomeScreen() {
       ) : technicianInfo ? (
         <View style={styles.welcomeCard}>
           <Image 
-            source={require('@/assets/images/a078dd88-e996-4ae7-a894-90dfc7c624dc.png')}
+            source={require('@/assets/images/d267bad1-e496-425e-b0d6-878ba5fd01f2.png')}
             style={styles.welcomeLogo}
             resizeMode="contain"
           />
@@ -177,6 +177,33 @@ export default function HomeScreen() {
           </View>
         </View>
       </View>
+
+      <View style={styles.accoladesSection}>
+        <Text style={styles.accoladesSectionTitle}>Our Accolades</Text>
+        <View style={styles.accoladesContainer}>
+          <View style={styles.accoladeItem}>
+            <Image 
+              source={require('@/assets/images/95ee205a-1e78-4e53-8ef1-91663d8e7965.jpeg')}
+              style={styles.accoladeImage}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.accoladeItem}>
+            <Image 
+              source={require('@/assets/images/641d60e8-3342-47c0-b6bb-06bd35e632c0.jpeg')}
+              style={styles.accoladeImage}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.accoladeItem}>
+            <Image 
+              source={require('@/assets/images/3e14b4b4-2190-41dd-9f28-acfe635d1d62.png')}
+              style={styles.accoladeImage}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+      </View>
     </ScrollView>
   );
 }
@@ -230,8 +257,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   welcomeLogo: {
-    width: 80,
-    height: 40,
+    width: 180,
+    height: 90,
     marginBottom: 12,
   },
   welcomeText: {
@@ -342,5 +369,38 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: colors.textSecondary,
     lineHeight: 20,
+  },
+  accoladesSection: {
+    marginTop: 16,
+    marginBottom: 32,
+  },
+  accoladesSectionTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  accoladesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    gap: 20,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
+  },
+  accoladeItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accoladeImage: {
+    width: 100,
+    height: 100,
   },
 });
