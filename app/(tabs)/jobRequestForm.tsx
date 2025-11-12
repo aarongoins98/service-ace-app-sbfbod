@@ -18,7 +18,7 @@ import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getUserData, TechnicianInfo } from "@/utils/userStorage";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 import { supabase } from "@/app/integrations/supabase/client";
 
@@ -27,20 +27,15 @@ const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25340159/u8h7rt
 export default function JobRequestFormScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const params = useLocalSearchParams();
   
   const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
   const [isLoadingTechnician, setIsLoadingTechnician] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
   
-  // Property Information - Pre-filled from pricing page if available
+  // Property Information
   const [squareFootage, setSquareFootage] = useState("");
   const [hvacSystems, setHvacSystems] = useState("");
-  
-  // Service Type Selection
-  const [ductCleaningSelected, setDuctCleaningSelected] = useState(false);
-  const [cleanAndSealSelected, setCleanAndSealSelected] = useState(false);
   
   // Customer Information
   const [customerFirstName, setCustomerFirstName] = useState("");
@@ -61,29 +56,7 @@ export default function JobRequestFormScreen() {
 
   useEffect(() => {
     loadTechnicianInfo();
-    
-    // Pre-fill form data from pricing page if available
-    if (params.squareFootage) {
-      console.log('Pre-filling square footage:', params.squareFootage);
-      setSquareFootage(params.squareFootage as string);
-    }
-    
-    if (params.hvacSystems) {
-      console.log('Pre-filling HVAC systems:', params.hvacSystems);
-      setHvacSystems(params.hvacSystems as string);
-    }
-    
-    if (params.serviceType) {
-      console.log('Pre-selecting service type:', params.serviceType);
-      if (params.serviceType === 'duct-cleaning') {
-        setDuctCleaningSelected(true);
-        setCleanAndSealSelected(false);
-      } else if (params.serviceType === 'clean-and-seal') {
-        setDuctCleaningSelected(false);
-        setCleanAndSealSelected(true);
-      }
-    }
-  }, [params]);
+  }, []);
 
   const loadTechnicianInfo = async () => {
     setIsLoadingTechnician(true);
@@ -214,13 +187,6 @@ export default function JobRequestFormScreen() {
       return;
     }
 
-    // Validate at least one service type is selected
-    if (!ductCleaningSelected && !cleanAndSealSelected) {
-      console.log("ERROR: No service type selected");
-      Alert.alert("Service Type Required", "Please select at least one service type (Duct Cleaning or Clean & Seal).");
-      return;
-    }
-
     const sqFt = parseFloat(squareFootage);
     if (isNaN(sqFt) || sqFt < 0) {
       console.log("ERROR: Invalid square footage:", squareFootage);
@@ -260,11 +226,6 @@ export default function JobRequestFormScreen() {
 
     console.log("All validations passed");
 
-    // Determine service types
-    const serviceTypes = [];
-    if (ductCleaningSelected) serviceTypes.push("Duct Cleaning");
-    if (cleanAndSealSelected) serviceTypes.push("Clean & Seal");
-
     // Prepare comprehensive data for Zapier webhook
     const jobData = {
       // Property Information
@@ -272,13 +233,6 @@ export default function JobRequestFormScreen() {
         squareFootage: sqFt,
         additionalHvacSystems: hvacCount,
         totalHvacSystems: hvacCount + 1,
-      },
-      
-      // Service Type
-      serviceType: {
-        ductCleaning: ductCleaningSelected,
-        cleanAndSeal: cleanAndSealSelected,
-        selectedServices: serviceTypes.join(", "),
       },
       
       // Customer Information
@@ -301,7 +255,7 @@ export default function JobRequestFormScreen() {
       
       // Additional Details
       additionalDetails: {
-        jobDescription: jobDescription || "Service requested",
+        jobDescription: jobDescription || "Duct cleaning service requested",
         preferredDate: preferredDate || "Not specified",
       },
       
@@ -415,8 +369,6 @@ export default function JobRequestFormScreen() {
     console.log("Resetting form");
     setSquareFootage("");
     setHvacSystems("");
-    setDuctCleaningSelected(false);
-    setCleanAndSealSelected(false);
     setCustomerFirstName("");
     setCustomerLastName("");
     setPhone("");
@@ -569,60 +521,6 @@ export default function JobRequestFormScreen() {
               Enter 0 if only 1 HVAC system
             </Text>
           </View>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionTitle}>Service Type *</Text>
-          
-          {/* Duct Cleaning Checkbox */}
-          <TouchableOpacity 
-            style={styles.checkboxContainer}
-            onPress={() => setDuctCleaningSelected(!ductCleaningSelected)}
-            activeOpacity={0.7}
-            disabled={isSubmitting}
-          >
-            <View style={[styles.checkbox, ductCleaningSelected && styles.checkboxChecked]}>
-              {ductCleaningSelected && (
-                <IconSymbol 
-                  ios_icon_name="checkmark" 
-                  android_material_icon_name="check" 
-                  size={18} 
-                  color="#ffffff" 
-                />
-              )}
-            </View>
-            <View style={styles.checkboxLabelContainer}>
-              <Text style={styles.checkboxLabel}>Duct Cleaning</Text>
-              <Text style={styles.checkboxDescription}>
-                Standard duct cleaning service
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Clean & Seal Checkbox */}
-          <TouchableOpacity 
-            style={styles.checkboxContainer}
-            onPress={() => setCleanAndSealSelected(!cleanAndSealSelected)}
-            activeOpacity={0.7}
-            disabled={isSubmitting}
-          >
-            <View style={[styles.checkbox, cleanAndSealSelected && styles.checkboxChecked]}>
-              {cleanAndSealSelected && (
-                <IconSymbol 
-                  ios_icon_name="checkmark" 
-                  android_material_icon_name="check" 
-                  size={18} 
-                  color="#ffffff" 
-                />
-              )}
-            </View>
-            <View style={styles.checkboxLabelContainer}>
-              <Text style={styles.checkboxLabel}>Clean & Seal</Text>
-              <Text style={styles.checkboxDescription}>
-                Premium duct cleaning with sealing service
-              </Text>
-            </View>
-          </TouchableOpacity>
 
           <View style={styles.divider} />
 
@@ -1063,45 +961,6 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: colors.background,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
-  },
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  checkboxLabelContainer: {
-    flex: 1,
-  },
-  checkboxLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  checkboxDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
   },
   divider: {
     height: 1,
