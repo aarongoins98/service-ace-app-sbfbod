@@ -557,12 +557,6 @@ export default function PricingToolScreen() {
             </Text>
           </View>
         </View>
-
-        <View style={styles.configNote}>
-          <Text style={styles.configNoteText}>
-            Note: To update zipcode charges or square footage pricing, modify the PRICING_CONFIG at the top of the pricingTool.tsx file.
-          </Text>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -838,19 +832,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: 4,
-  },
-  configNote: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.accent,
-  },
-  configNoteText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 18,
   },
 });

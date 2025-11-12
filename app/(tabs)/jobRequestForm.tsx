@@ -709,20 +709,7 @@ export default function JobRequestFormScreen() {
             color={colors.accent} 
           />
           <Text style={styles.infoText}>
-            Your technician information will be automatically included with this job request. The data will be sent to Housecall Pro via Zapier and an email notification will be sent to agoins@refreshductcleaning.com.
-          </Text>
-        </View>
-
-        <View style={styles.debugBox}>
-          <Text style={styles.debugTitle}>🔍 Debugging Information</Text>
-          <Text style={styles.debugText}>
-            Webhook URL: {ZAPIER_WEBHOOK_URL}
-          </Text>
-          <Text style={styles.debugText}>
-            Check your console logs for detailed submission data.
-          </Text>
-          <Text style={styles.debugText}>
-            All form data and API responses are logged.
+            Your information and the booking information will be sent to agoins@refreshductcleaning.com
           </Text>
         </View>
       </ScrollView>
@@ -989,26 +976,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '400',
     color: colors.textSecondary,
-    lineHeight: 18,
-  },
-  debugBox: {
-    backgroundColor: '#f0f9ff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#0ea5e9',
-    marginBottom: 20,
-  },
-  debugTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0c4a6e',
-    marginBottom: 8,
-  },
-  debugText: {
-    fontSize: 12,
-    color: '#0c4a6e',
-    marginBottom: 4,
     lineHeight: 18,
   },
   modalOverlay: {
