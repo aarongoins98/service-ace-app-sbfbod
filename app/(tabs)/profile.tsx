@@ -170,7 +170,9 @@ export default function ProfileScreen() {
           style: "destructive",
           onPress: async () => {
             try {
+              console.log("Logging out user...");
               await clearUserData();
+              console.log("User data cleared, redirecting to login");
               router.replace("/(tabs)/login");
             } catch (error) {
               console.error("Error logging out:", error);
@@ -415,70 +417,6 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Features</Text>
-          <View style={styles.featureCard}>
-            <View style={styles.featureRow}>
-              <IconSymbol 
-                ios_icon_name="checkmark.circle.fill" 
-                android_material_icon_name="check_circle" 
-                size={24} 
-                color={colors.success} 
-              />
-              <Text style={styles.featureText}>Pricing Tool for quick quotes</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <IconSymbol 
-                ios_icon_name="checkmark.circle.fill" 
-                android_material_icon_name="check_circle" 
-                size={24} 
-                color={colors.success} 
-              />
-              <Text style={styles.featureText}>Job request form with CRM integration</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <IconSymbol 
-                ios_icon_name="checkmark.circle.fill" 
-                android_material_icon_name="check_circle" 
-                size={24} 
-                color={colors.success} 
-              />
-              <Text style={styles.featureText}>Optimized for tablets and iPads</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Integration Setup</Text>
-          <View style={styles.integrationCard}>
-            <IconSymbol 
-              ios_icon_name="link.circle.fill" 
-              android_material_icon_name="link" 
-              size={32} 
-              color={colors.accent} 
-            />
-            <Text style={styles.integrationTitle}>Zapier Integration</Text>
-            <Text style={styles.integrationText}>
-              To connect this app with your CRM:
-            </Text>
-            <Text style={styles.integrationStep}>
-              1. Create a Zapier account at zapier.com
-            </Text>
-            <Text style={styles.integrationStep}>
-              2. Create a new Zap with a Webhook trigger
-            </Text>
-            <Text style={styles.integrationStep}>
-              3. Copy the webhook URL
-            </Text>
-            <Text style={styles.integrationStep}>
-              4. Add the URL to the job request form code
-            </Text>
-            <Text style={styles.integrationStep}>
-              5. Connect your CRM as the action step
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
           <TouchableOpacity 
             style={styles.logoutButton} 
             onPress={handleLogout}
@@ -696,55 +634,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  featureCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 20,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  featureText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.text,
-    flex: 1,
-  },
-  integrationCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  integrationTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginTop: 12,
-    marginBottom: 16,
-  },
-  integrationText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.text,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  integrationStep: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: colors.textSecondary,
-    marginBottom: 8,
-    alignSelf: 'flex-start',
-    width: '100%',
   },
   loginButton: {
     backgroundColor: colors.primary,

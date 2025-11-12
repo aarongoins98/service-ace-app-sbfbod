@@ -170,7 +170,9 @@ export default function ProfileScreen() {
           style: "destructive",
           onPress: async () => {
             try {
+              console.log("Logging out user...");
               await clearUserData();
+              console.log("User data cleared, redirecting to login");
               router.replace("/(tabs)/login");
             } catch (error) {
               console.error("Error logging out:", error);
@@ -415,39 +417,6 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Features</Text>
-          <GlassView style={styles.featureCard} intensity={80}>
-            <View style={styles.featureRow}>
-              <IconSymbol 
-                ios_icon_name="checkmark.circle.fill" 
-                android_material_icon_name="check_circle" 
-                size={24} 
-                color={colors.success} 
-              />
-              <Text style={styles.featureText}>Pricing Tool for quick quotes</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <IconSymbol 
-                ios_icon_name="checkmark.circle.fill" 
-                android_material_icon_name="check_circle" 
-                size={24} 
-                color={colors.success} 
-              />
-              <Text style={styles.featureText}>Job request form with CRM integration</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <IconSymbol 
-                ios_icon_name="checkmark.circle.fill" 
-                android_material_icon_name="check_circle" 
-                size={24} 
-                color={colors.success} 
-              />
-              <Text style={styles.featureText}>Optimized for tablets and iPads</Text>
-            </View>
-          </GlassView>
-        </View>
-
-        <View style={styles.section}>
           <TouchableOpacity 
             style={styles.logoutButton} 
             onPress={handleLogout}
@@ -663,24 +632,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  featureCard: {
-    borderRadius: 12,
-    padding: 20,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  featureText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.text,
-    flex: 1,
   },
   loginButton: {
     backgroundColor: colors.primary,
