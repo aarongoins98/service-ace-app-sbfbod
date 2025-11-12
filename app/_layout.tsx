@@ -6,7 +6,7 @@ import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, Alert } from "react-native";
+import { useColorScheme, Alert, View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useNetworkState } from "expo-network";
 import {
   DarkTheme,
@@ -18,7 +18,9 @@ import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch((err) => {
+  console.error('Error preventing splash screen auto-hide:', err);
+});
 
 export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
@@ -27,35 +29,104 @@ export const unstable_settings = {
 // Error Boundary Component
 class AppErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean; error: Error | null }
+  { hasError: boolean; error: Error | null; errorInfo: React.ErrorInfo | null }
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error: Error) {
+    console.error('Error caught by boundary:', error);
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('App Error:', error);
     console.error('Error Info:', errorInfo);
-    Alert.alert(
-      'Application Error',
-      'An unexpected error occurred. Please restart the app.',
-      [{ text: 'OK' }]
-    );
+    console.error('Component Stack:', errorInfo.componentStack);
+    this.setState({ errorInfo });
   }
+
+  handleReload = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+  };
 
   render() {
     if (this.state.hasError) {
-      return null;
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Something went wrong</Text>
+          <Text style={styles.errorMessage}>
+            {this.state.error?.message || 'An unexpected error occurred'}
+          </Text>
+          <TouchableOpacity style={styles.reloadButton} onPress={this.handleReload}>
+            <Text style={styles.reloadButtonText}>Try Again</Text>
+          </TouchableOpacity>
+          {__DEV__ && this.state.error && (
+            <View style={styles.errorDetails}>
+              <Text style={styles.errorDetailsTitle}>Error Details (Dev Only):</Text>
+              <Text style={styles.errorDetailsText}>{this.state.error.stack}</Text>
+            </View>
+          )}
+        </View>
+      );
     }
 
     return this.props.children;
   }
 }
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#000',
+  },
+  errorMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#666',
+  },
+  reloadButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 10,
+  },
+  reloadButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  errorDetails: {
+    marginTop: 30,
+    padding: 15,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    maxWidth: '90%',
+  },
+  errorDetailsTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#000',
+  },
+  errorDetailsText: {
+    fontSize: 12,
+    color: '#333',
+    fontFamily: 'monospace',
+  },
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -67,6 +138,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (error) {
       console.error('Font loading error:', error);
+      // Don't block the app if fonts fail to load
+      SplashScreen.hideAsync().catch((err) => {
+        console.error('Error hiding splash screen after font error:', err);
+      });
     }
   }, [error]);
 

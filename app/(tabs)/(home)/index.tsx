@@ -12,6 +12,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadTechnicianInfo();
@@ -19,15 +20,30 @@ export default function HomeScreen() {
 
   const loadTechnicianInfo = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const data = await getUserData();
       setTechnicianInfo(data);
     } catch (error) {
       console.error("Error loading technician info:", error);
+      setError("Failed to load user data");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadTechnicianInfo}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <ScrollView 
@@ -244,6 +260,29 @@ const styles = StyleSheet.create({
   loadingContainer: {
     padding: 20,
     alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: colors.error,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   welcomeCard: {
     backgroundColor: colors.card,

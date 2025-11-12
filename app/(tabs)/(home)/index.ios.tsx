@@ -79,12 +79,36 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: colors.error,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
 });
 
 export default function HomeScreen() {
   const { colors: themeColors } = useTheme();
   const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -92,16 +116,14 @@ export default function HomeScreen() {
   }, []);
 
   const loadTechnicianInfo = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const data = await getUserData();
       setTechnicianInfo(data);
-    } catch (error) {
-      console.error("Error loading technician info:", error);
-      Alert.alert(
-        "Error",
-        "Failed to load user data. Please try logging in again.",
-        [{ text: "OK" }]
-      );
+    } catch (err) {
+      console.error("Error loading technician info:", err);
+      setError("Failed to load user data");
     } finally {
       setLoading(false);
     }
@@ -111,6 +133,19 @@ export default function HomeScreen() {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadTechnicianInfo}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }

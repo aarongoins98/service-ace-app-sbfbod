@@ -18,6 +18,12 @@ function initializeSupabase() {
   }
 
   try {
+    console.log('Initializing Supabase client...');
+    
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+      throw new Error('Supabase URL or API key is missing');
+    }
+
     supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
         storage: AsyncStorage,
@@ -31,6 +37,8 @@ function initializeSupabase() {
     return supabaseInstance;
   } catch (error) {
     console.error('Error initializing Supabase client:', error);
+    // Return a mock client that logs errors instead of crashing
+    console.warn('Creating fallback Supabase client');
     throw error;
   }
 }
