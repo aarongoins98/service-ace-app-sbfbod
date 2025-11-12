@@ -496,17 +496,6 @@ export default function JobRequestFormScreen() {
             resizeMode="contain"
           />
           <Text style={styles.title}>Job Request Form</Text>
-          <View style={styles.noticeBox}>
-            <IconSymbol 
-              ios_icon_name="info.circle.fill" 
-              android_material_icon_name="info" 
-              size={20} 
-              color={colors.secondary} 
-            />
-            <Text style={styles.noticeText}>
-              Refresh Duct Cleaning will reach out to the customer to schedule at our soonest availability.
-            </Text>
-          </View>
         </View>
 
         {/* Enhanced Technician Banner with Clear Labeling */}
@@ -1009,25 +998,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 16,
-  },
-  noticeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.highlight,
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-    borderWidth: 2,
-    borderColor: colors.secondary,
-    width: '100%',
-  },
-  noticeText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    lineHeight: 20,
+    marginBottom: 8,
   },
   technicianSection: {
     marginBottom: 24,
