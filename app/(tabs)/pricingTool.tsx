@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   ScrollView, 
   StyleSheet, 
@@ -10,11 +10,13 @@ import {
   Alert,
   Platform,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { supabase } from "@/app/integrations/supabase/client";
 
 // Pricing Configuration
 // You can easily update these values to adjust pricing
@@ -54,123 +56,6 @@ const PRICING_CONFIG = {
   
   // Partner discount percentage
   partnerDiscountPercent: 20,
-  
-  // Zipcode charges
-  // Add or modify zipcodes and their associated charges here
-  zipcodeCharges: {
-    // $0 charge zipcodes
-    '84003': 0,
-    '84004': 0,
-    '84005': 0,
-    '84009': 0,
-    '84020': 0,
-    '84042': 0,
-    '84043': 0,
-    '84045': 0,
-    '84047': 0,
-    '84057': 0,
-    '84058': 0,
-    '84059': 0,
-    '84062': 0,
-    '84065': 0,
-    '84070': 0,
-    '84084': 0,
-    '84088': 0,
-    '84093': 0,
-    '84094': 0,
-    '84095': 0,
-    '84097': 0,
-    '84601': 0,
-    '84606': 0,
-    '84660': 0,
-    
-    // $50 charge zipcodes
-    '84006': 50,
-    '84013': 50,
-    '84044': 50,
-    '84081': 50,
-    '84101': 50,
-    '84102': 50,
-    '84103': 50,
-    '84104': 50,
-    '84105': 50,
-    '84106': 50,
-    '84107': 50,
-    '84108': 50,
-    '84109': 50,
-    '84111': 50,
-    '84112': 50,
-    '84113': 50,
-    '84115': 50,
-    '84116': 50,
-    '84117': 50,
-    '84118': 50,
-    '84119': 50,
-    '84120': 50,
-    '84121': 50,
-    '84122': 50,
-    '84123': 50,
-    '84124': 50,
-    '84128': 50,
-    '84129': 50,
-    '84150': 50,
-    '84626': 50,
-    '84633': 50,
-    '84651': 50,
-    '84653': 50,
-    '84655': 50,
-    
-    // $100 charge zipcodes
-    '84010': 100,
-    '84014': 100,
-    '84025': 100,
-    '84037': 100,
-    '84040': 100,
-    '84041': 100,
-    '84049': 100,
-    '84054': 100,
-    '84087': 100,
-    '84645': 100,
-    
-    // $150 charge zipcodes
-    '84015': 150,
-    '84056': 150,
-    '84060': 150,
-    '84061': 150,
-    '84067': 150,
-    '84074': 150,
-    '84075': 150,
-    '84082': 150,
-    '84098': 150,
-    '84315': 150,
-    '84401': 150,
-    '84403': 150,
-    '84404': 150,
-    '84405': 150,
-    '84414': 150,
-    '84628': 150,
-    '84629': 150,
-    '84632': 150,
-    '84648': 150,
-    
-    // $200 charge zipcodes
-    '84017': 200,
-    '84029': 200,
-    '84036': 200,
-    '84050': 200,
-    '84071': 200,
-    '84302': 200,
-    '84310': 200,
-    '84317': 200,
-    '84324': 200,
-    '84340': 200,
-    '84526': 200,
-    '84627': 200,
-    '84639': 200,
-    '84646': 200,
-    '84647': 200,
-    '84662': 200,
-  } as { [key: string]: number },
 };
 
 export default function PricingToolScreen() {
@@ -189,6 +74,45 @@ export default function PricingToolScreen() {
     total: number;
     cleanAndSealPrice: number;
   } | null>(null);
+  
+  // State for zipcode charges from Supabase
+  const [zipcodeCharges, setZipcodeCharges] = useState<{ [key: string]: number }>({});
+  const [isLoadingZipcodes, setIsLoadingZipcodes] = useState(true);
+
+  useEffect(() => {
+    loadZipcodeCharges();
+  }, []);
+
+  const loadZipcodeCharges = async () => {
+    try {
+      setIsLoadingZipcodes(true);
+      console.log("Loading zipcode charges from Supabase...");
+      
+      const { data, error } = await supabase
+        .from('zipcode_charges')
+        .select('zipcode, charge');
+
+      if (error) {
+        console.error("Error loading zipcode charges:", error);
+        Alert.alert("Error", "Failed to load zipcode data. Using default charges.");
+        return;
+      }
+
+      // Convert array to object for easy lookup
+      const chargesMap: { [key: string]: number } = {};
+      data?.forEach((item) => {
+        chargesMap[item.zipcode] = item.charge;
+      });
+
+      setZipcodeCharges(chargesMap);
+      console.log(`Loaded ${data?.length || 0} zipcode charges from Supabase`);
+    } catch (error) {
+      console.error("Error loading zipcode charges:", error);
+      Alert.alert("Error", "An error occurred while loading zipcode data.");
+    } finally {
+      setIsLoadingZipcodes(false);
+    }
+  };
 
   const getSqftCharge = (sqft: number): number => {
     const range = PRICING_CONFIG.sqftRanges.find(
@@ -200,7 +124,17 @@ export default function PricingToolScreen() {
   const getZipcodeCharge = (zip: string): number => {
     // Remove any spaces or dashes from zipcode
     const cleanZip = zip.replace(/[\s-]/g, '');
-    return PRICING_CONFIG.zipcodeCharges[cleanZip] ?? 0;
+    
+    // Look up charge from Supabase data
+    const charge = zipcodeCharges[cleanZip];
+    
+    if (charge !== undefined) {
+      console.log(`Zipcode ${cleanZip} charge from Supabase: $${charge}`);
+      return charge;
+    }
+    
+    console.log(`Zipcode ${cleanZip} not found in database, using $0 default`);
+    return 0;
   };
 
   const getCleanAndSealPrice = (sqft: number, hvacCount: number): number => {
@@ -305,6 +239,17 @@ export default function PricingToolScreen() {
     return `${range.min}-${range.max} sqft`;
   };
 
+  if (isLoadingZipcodes) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading pricing data...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView 
@@ -325,6 +270,21 @@ export default function PricingToolScreen() {
           />
           <Text style={styles.title}>Pricing Tool</Text>
           <Text style={styles.subtitle}>Generate accurate service quotes</Text>
+          
+          {/* Refresh button for zipcode data */}
+          <TouchableOpacity 
+            style={styles.refreshButton}
+            onPress={loadZipcodeCharges}
+            activeOpacity={0.8}
+          >
+            <IconSymbol 
+              ios_icon_name="arrow.clockwise" 
+              android_material_icon_name="refresh" 
+              size={16} 
+              color={colors.primary} 
+            />
+            <Text style={styles.refreshButtonText}>Refresh Zipcode Data</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.formContainer}>
@@ -547,7 +507,7 @@ export default function PricingToolScreen() {
               - Additional HVAC systems ($300 each)
             </Text>
             <Text style={styles.infoText}>
-              - Location-based zipcode charges ($0-$200)
+              - Location-based zipcode charges (loaded from database)
             </Text>
             <Text style={styles.infoText}>
               - 20% Partner Discount automatically applied
@@ -565,6 +525,17 @@ export default function PricingToolScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 16,
   },
   scrollContent: {
     paddingTop: Platform.OS === 'android' ? 20 : 0,
@@ -592,6 +563,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
     color: colors.textSecondary,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  refreshButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
   },
   formContainer: {
     backgroundColor: colors.card,
