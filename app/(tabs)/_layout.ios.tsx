@@ -21,26 +21,6 @@ export default function TabLayout() {
         <Icon sf="person.fill" />
         <Label>Profile</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="login" name="login">
-        <Icon sf="person.badge.key.fill" />
-        <Label>Login</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="adminLogin" name="adminLogin">
-        <Icon sf="lock.shield.fill" />
-        <Label>Admin</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="zipcodeEditor" name="zipcodeEditor">
-        <Icon sf="map.fill" />
-        <Label>Zipcodes</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="zipcodeAnalyzer" name="zipcodeAnalyzer">
-        <Icon sf="chart.bar.fill" />
-        <Label>Analyzer</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="companyEditor" name="companyEditor">
-        <Icon sf="building.2.fill" />
-        <Label>Companies</Label>
-      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
