@@ -35,28 +35,46 @@ export default function AdminLoginScreen() {
       return;
     }
 
-    if (password === ADMIN_PASSWORD) {
-      setIsLoading(true);
-      try {
-        // Save admin session
-        await AsyncStorage.setItem(ADMIN_SESSION_KEY, "true");
-        console.log("Admin login successful");
-        
-        // Navigate to zipcode editor
-        router.replace("/(tabs)/zipcodeEditor");
-        
-        setTimeout(() => {
-          Alert.alert("Success", "Welcome, Admin!");
-        }, 500);
-      } catch (error) {
-        console.error("Error saving admin session:", error);
-        Alert.alert("Error", "Failed to save session. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
+    if (password !== ADMIN_PASSWORD) {
       Alert.alert("Access Denied", "Incorrect password. Please try again.");
       setPassword("");
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      // Save admin session with explicit await
+      await AsyncStorage.setItem(ADMIN_SESSION_KEY, "true");
+      console.log("Admin session saved to AsyncStorage");
+      
+      // Verify the session was saved (iOS-specific fix)
+      const verifySession = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
+      console.log("Verified admin session:", verifySession);
+      
+      if (verifySession === "true") {
+        // Show success message before navigation
+        Alert.alert(
+          "Success", 
+          "Welcome, Admin!",
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                // Navigate after user acknowledges
+                console.log("Navigating to zipcode editor");
+                router.replace("/(tabs)/zipcodeEditor");
+              }
+            }
+          ]
+        );
+      } else {
+        throw new Error("Session verification failed");
+      }
+    } catch (error) {
+      console.error("Error saving admin session:", error);
+      Alert.alert("Error", "Failed to save session. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -96,6 +114,7 @@ export default function AdminLoginScreen() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 onSubmitEditing={handleLogin}
+                editable={!isLoading}
               />
             </View>
 

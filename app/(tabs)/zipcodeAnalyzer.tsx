@@ -107,6 +107,7 @@ export default function ZipcodeAnalyzerScreen() {
   
   const [zipcodes, setZipcodes] = useState<ZipcodeData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [selectedCounty, setSelectedCounty] = useState<string | null>(null);
   const [missingZipcodes, setMissingZipcodes] = useState<number[]>([]);
   const [searchZipcode, setSearchZipcode] = useState("");
@@ -118,15 +119,28 @@ export default function ZipcodeAnalyzerScreen() {
 
   const checkAdminSession = async () => {
     try {
+      console.log("Checking admin session...");
+      setIsCheckingAuth(true);
+      
+      // Add a small delay to ensure AsyncStorage is ready on iOS
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const session = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
+      console.log("Admin session value:", session);
+      
       if (session !== "true") {
+        console.log("No valid admin session found, redirecting to login");
         Alert.alert("Access Denied", "Please login as admin first.");
         router.replace("/(tabs)/adminLogin");
         return;
       }
+      
+      console.log("Admin session verified, loading zipcodes");
+      setIsCheckingAuth(false);
       loadZipcodes();
     } catch (error) {
       console.error("Error checking admin session:", error);
+      Alert.alert("Error", "Failed to verify admin session. Please login again.");
       router.replace("/(tabs)/adminLogin");
     }
   };
@@ -217,19 +231,25 @@ export default function ZipcodeAnalyzerScreen() {
 
   const handleLogout = async () => {
     try {
+      console.log("Logging out admin...");
       await AsyncStorage.removeItem(ADMIN_SESSION_KEY);
+      console.log("Admin session removed");
       router.replace("/(tabs)/adminLogin");
     } catch (error) {
       console.error("Error logging out:", error);
+      Alert.alert("Error", "Failed to logout. Please try again.");
     }
   };
 
-  if (isLoading) {
+  // Show loading screen while checking authentication
+  if (isCheckingAuth || isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading zipcode data...</Text>
+          <Text style={styles.loadingText}>
+            {isCheckingAuth ? "Verifying admin access..." : "Loading zipcode data..."}
+          </Text>
         </View>
       </SafeAreaView>
     );

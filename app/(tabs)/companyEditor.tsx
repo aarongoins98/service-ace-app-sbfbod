@@ -33,6 +33,7 @@ export default function CompanyEditorScreen() {
   
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [newCompanyName, setNewCompanyName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -44,15 +45,28 @@ export default function CompanyEditorScreen() {
 
   const checkAdminSession = async () => {
     try {
+      console.log("Checking admin session...");
+      setIsCheckingAuth(true);
+      
+      // Add a small delay to ensure AsyncStorage is ready on iOS
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const session = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
+      console.log("Admin session value:", session);
+      
       if (session !== "true") {
+        console.log("No valid admin session found, redirecting to login");
         Alert.alert("Access Denied", "Please login as admin first.");
         router.replace("/(tabs)/adminLogin");
         return;
       }
+      
+      console.log("Admin session verified, loading companies");
+      setIsCheckingAuth(false);
       loadCompanies();
     } catch (error) {
       console.error("Error checking admin session:", error);
+      Alert.alert("Error", "Failed to verify admin session. Please login again.");
       router.replace("/(tabs)/adminLogin");
     }
   };
@@ -183,12 +197,27 @@ export default function CompanyEditorScreen() {
 
   const handleLogout = async () => {
     try {
+      console.log("Logging out admin...");
       await AsyncStorage.removeItem(ADMIN_SESSION_KEY);
+      console.log("Admin session removed");
       router.replace("/(tabs)/adminLogin");
     } catch (error) {
       console.error("Error logging out:", error);
+      Alert.alert("Error", "Failed to logout. Please try again.");
     }
   };
+
+  // Show loading screen while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Verifying admin access...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const filteredCompanies = companies.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
