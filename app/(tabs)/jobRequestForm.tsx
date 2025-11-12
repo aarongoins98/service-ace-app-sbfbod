@@ -11,6 +11,7 @@ import {
   Platform,
   ActivityIndicator,
   Image,
+  Modal,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -28,6 +29,7 @@ export default function JobRequestFormScreen() {
   const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
   const [isLoadingTechnician, setIsLoadingTechnician] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showThankYouModal, setShowThankYouModal] = useState(false);
   
   // Property Information
   const [squareFootage, setSquareFootage] = useState("");
@@ -48,7 +50,6 @@ export default function JobRequestFormScreen() {
   // Additional Details
   const [jobDescription, setJobDescription] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     loadTechnicianInfo();
@@ -60,18 +61,6 @@ export default function JobRequestFormScreen() {
       const data = await getUserData();
       console.log("Loaded technician info:", data);
       setTechnicianInfo(data);
-      if (!data) {
-        Alert.alert(
-          "Login Required",
-          "Please login first to submit job requests.",
-          [
-            {
-              text: "Go to Login",
-              onPress: () => router.push("/(tabs)/login"),
-            },
-          ]
-        );
-      }
     } catch (error) {
       console.error("Error loading technician info:", error);
     } finally {
@@ -93,12 +82,17 @@ export default function JobRequestFormScreen() {
     console.log("=== JOB REQUEST SUBMISSION STARTED ===");
     console.log("Timestamp:", new Date().toISOString());
     
+    // Check if user is logged in FIRST
     if (!technicianInfo) {
-      console.log("ERROR: No technician info available");
+      console.log("ERROR: No technician info available - Login required");
       Alert.alert(
         "Login Required",
-        "Please login first to submit job requests.",
+        "You must be logged in to submit a job request. Please login first.",
         [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
           {
             text: "Go to Login",
             onPress: () => router.push("/(tabs)/login"),
@@ -244,19 +238,8 @@ export default function JobRequestFormScreen() {
       
       if (response.ok) {
         console.log('✅ Successfully sent to Zapier');
-        setIsSubmitted(true);
-        Alert.alert(
-          "Success!", 
-          `Job request submitted by ${technicianInfo.firstName} ${technicianInfo.lastName} from ${technicianInfo.companyName}. The information has been sent to Housecall Pro and an email notification has been sent to agoins@refreshductcleaning.com.`,
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                console.log("Job request submitted successfully - User acknowledged");
-              }
-            }
-          ]
-        );
+        // Show thank you modal
+        setShowThankYouModal(true);
       } else {
         console.error('❌ Zapier webhook returned error');
         console.error('Status:', response.status);
@@ -298,7 +281,12 @@ export default function JobRequestFormScreen() {
     setZipcode("");
     setJobDescription("");
     setPreferredDate("");
-    setIsSubmitted(false);
+    setShowThankYouModal(false);
+  };
+
+  const handleCloseThankYou = () => {
+    setShowThankYouModal(false);
+    resetForm();
   };
 
   if (isLoadingTechnician) {
@@ -307,6 +295,39 @@ export default function JobRequestFormScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show login required screen if not logged in
+  if (!technicianInfo) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={styles.loginRequiredContainer}>
+          <IconSymbol 
+            ios_icon_name="lock.circle.fill" 
+            android_material_icon_name="lock" 
+            size={80} 
+            color={colors.primary} 
+          />
+          <Text style={styles.loginRequiredTitle}>Login Required</Text>
+          <Text style={styles.loginRequiredText}>
+            You must be logged in to submit job requests. Please login with your technician information to continue.
+          </Text>
+          <TouchableOpacity 
+            style={styles.loginButton} 
+            onPress={() => router.push("/(tabs)/login")}
+            activeOpacity={0.8}
+          >
+            <IconSymbol 
+              ios_icon_name="person.crop.circle.badge.checkmark" 
+              android_material_icon_name="how_to_reg" 
+              size={20} 
+              color="#ffffff" 
+            />
+            <Text style={styles.loginButtonText}>Go to Login</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -338,31 +359,29 @@ export default function JobRequestFormScreen() {
           </View>
         </View>
 
-        {technicianInfo && (
-          <View style={styles.technicianBanner}>
-            {technicianInfo.profilePictureUri ? (
-              <Image 
-                source={{ uri: technicianInfo.profilePictureUri }} 
-                style={styles.profilePicture}
-              />
-            ) : (
-              <IconSymbol 
-                ios_icon_name="person.crop.circle.fill" 
-                android_material_icon_name="account_circle" 
-                size={48} 
-                color={colors.primary} 
-              />
-            )}
-            <View style={styles.technicianInfo}>
-              <Text style={styles.technicianName}>
-                {technicianInfo.firstName} {technicianInfo.lastName}
-              </Text>
-              <Text style={styles.technicianCompany}>
-                {technicianInfo.companyName}
-              </Text>
-            </View>
+        <View style={styles.technicianBanner}>
+          {technicianInfo.profilePictureUri ? (
+            <Image 
+              source={{ uri: technicianInfo.profilePictureUri }} 
+              style={styles.profilePicture}
+            />
+          ) : (
+            <IconSymbol 
+              ios_icon_name="person.crop.circle.fill" 
+              android_material_icon_name="account_circle" 
+              size={48} 
+              color={colors.primary} 
+            />
+          )}
+          <View style={styles.technicianInfo}>
+            <Text style={styles.technicianName}>
+              {technicianInfo.firstName} {technicianInfo.lastName}
+            </Text>
+            <Text style={styles.technicianCompany}>
+              {technicianInfo.companyName}
+            </Text>
           </View>
-        )}
+        </View>
 
         <View style={styles.formContainer}>
           <Text style={styles.sectionTitle}>Property Information</Text>
@@ -540,51 +559,29 @@ export default function JobRequestFormScreen() {
             />
           </View>
 
-          {!isSubmitted ? (
-            <TouchableOpacity 
-              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]} 
-              onPress={handleSubmit}
-              activeOpacity={0.8}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <ActivityIndicator size="small" color="#ffffff" />
-                  <Text style={styles.submitButtonText}>Submitting...</Text>
-                </>
-              ) : (
-                <>
-                  <IconSymbol 
-                    ios_icon_name="paperplane.fill" 
-                    android_material_icon_name="send" 
-                    size={20} 
-                    color="#ffffff" 
-                  />
-                  <Text style={styles.submitButtonText}>Submit Job Request</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.successContainer}>
-              <IconSymbol 
-                ios_icon_name="checkmark.circle.fill" 
-                android_material_icon_name="check_circle" 
-                size={48} 
-                color={colors.success} 
-              />
-              <Text style={styles.successText}>Job Request Submitted!</Text>
-              <Text style={styles.successSubtext}>
-                The information has been sent to Housecall Pro and an email notification has been sent.
-              </Text>
-              <TouchableOpacity 
-                style={styles.resetButton} 
-                onPress={resetForm}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.resetButtonText}>Submit Another Request</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <TouchableOpacity 
+            style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]} 
+            onPress={handleSubmit}
+            activeOpacity={0.8}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <ActivityIndicator size="small" color="#ffffff" />
+                <Text style={styles.submitButtonText}>Submitting...</Text>
+              </>
+            ) : (
+              <>
+                <IconSymbol 
+                  ios_icon_name="paperplane.fill" 
+                  android_material_icon_name="send" 
+                  size={20} 
+                  color="#ffffff" 
+                />
+                <Text style={styles.submitButtonText}>Submit Job Request</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.infoBox}>
@@ -612,6 +609,45 @@ export default function JobRequestFormScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Thank You Modal */}
+      <Modal
+        visible={showThankYouModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCloseThankYou}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconContainer}>
+              <IconSymbol 
+                ios_icon_name="checkmark.circle.fill" 
+                android_material_icon_name="check_circle" 
+                size={80} 
+                color={colors.success} 
+              />
+            </View>
+            <Text style={styles.modalTitle}>Thank You!</Text>
+            <Text style={styles.modalSubtitle}>
+              Your job request has been submitted successfully
+            </Text>
+            <View style={styles.modalDivider} />
+            <Text style={styles.modalText}>
+              The information has been sent to Housecall Pro and an email notification has been sent to agoins@refreshductcleaning.com.
+            </Text>
+            <Text style={styles.modalText}>
+              Refresh Duct Cleaning will reach out to the customer to schedule at our soonest availability.
+            </Text>
+            <TouchableOpacity 
+              style={styles.modalButton} 
+              onPress={handleCloseThankYou}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalButtonText}>Submit Another Request</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -629,6 +665,43 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: colors.textSecondary,
+  },
+  loginRequiredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  loginRequiredTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 24,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  loginRequiredText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  loginButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+    elevation: 4,
+  },
+  loginButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '600',
   },
   scrollContent: {
     paddingTop: Platform.OS === 'android' ? 20 : 0,
@@ -768,36 +841,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  successContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  successText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.success,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  successSubtext: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  resetButton: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 12,
-    paddingHorizontal: 24,
-  },
-  resetButtonText: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -835,5 +878,66 @@ const styles = StyleSheet.create({
     color: '#0c4a6e',
     marginBottom: 4,
     lineHeight: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 32,
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+    boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.2)',
+    elevation: 8,
+  },
+  modalIconContainer: {
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.success,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 20,
+  },
+  modalText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  modalButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    marginTop: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
