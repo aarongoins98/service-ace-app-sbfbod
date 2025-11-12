@@ -280,14 +280,6 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <View style={styles.profileIconContainer}>
-            <IconSymbol 
-              ios_icon_name="person.circle.fill" 
-              android_material_icon_name="account_circle" 
-              size={100} 
-              color={colors.primary} 
-            />
-          </View>
           <Text style={styles.title}>Technician Profile</Text>
           <Text style={styles.subtitle}>
             {isEditing ? "Edit your information" : "Your account information"}
@@ -638,16 +630,12 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 32,
-    marginTop: 20,
-  },
-  profileIconContainer: {
-    marginBottom: 16,
+    marginTop: 8,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
     color: colors.text,
-    marginTop: 12,
     marginBottom: 4,
   },
   subtitle: {
