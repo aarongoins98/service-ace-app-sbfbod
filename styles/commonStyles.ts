@@ -1,15 +1,16 @@
 
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
+// Refresh Duct Cleaning Brand Colors
 export const colors = {
   background: '#f9f9f9',
-  text: '#212121',
+  text: '#1B3A52', // Navy blue from brand
   textSecondary: '#757575',
-  primary: '#03a9f4',
-  secondary: '#00bcd4',
-  accent: '#ff4081',
+  primary: '#1B3A52', // Navy blue - main brand color
+  secondary: '#F2A900', // Yellow/Gold - secondary brand color
+  accent: '#FF8C42', // Orange accent
   card: '#ffffff',
-  highlight: '#bbdefb',
+  highlight: '#FFF8E1', // Light yellow highlight
   border: '#e0e0e0',
   error: '#f44336',
   success: '#4caf50',

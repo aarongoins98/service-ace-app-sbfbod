@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -25,6 +26,12 @@ export default function JobRequestFormScreen() {
   const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
   const [isLoadingTechnician, setIsLoadingTechnician] = useState(true);
   
+  // Same fields as Pricing Tool
+  const [squareFootage, setSquareFootage] = useState("");
+  const [hvacSystems, setHvacSystems] = useState("");
+  const [zipcode, setZipcode] = useState("");
+  
+  // Customer information
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -86,9 +93,21 @@ export default function JobRequestFormScreen() {
       return;
     }
 
-    // Validate inputs
-    if (!customerName || !phone || !email || !address || !jobDescription) {
+    // Validate all required inputs (same as Pricing Tool)
+    if (!squareFootage || !hvacSystems || !zipcode || !customerName || !phone || !email || !address) {
       Alert.alert("Missing Information", "Please fill in all required fields.");
+      return;
+    }
+
+    const sqFt = parseFloat(squareFootage);
+    if (isNaN(sqFt) || sqFt < 0) {
+      Alert.alert("Invalid Input", "Please enter a valid square footage (0 or greater).");
+      return;
+    }
+
+    const hvacCount = parseInt(hvacSystems);
+    if (isNaN(hvacCount) || hvacCount < 0) {
+      Alert.alert("Invalid Input", "Please enter a valid number of additional HVAC systems (0 or greater).");
       return;
     }
 
@@ -119,8 +138,11 @@ export default function JobRequestFormScreen() {
         email,
         address,
       },
-      // Job Details
-      jobDescription,
+      // Job Details (same as Pricing Tool)
+      squareFootage: sqFt,
+      additionalHvacSystems: hvacCount,
+      zipcode,
+      jobDescription: jobDescription || "Duct cleaning service requested",
       preferredDate: preferredDate || "Not specified",
       submittedAt: new Date().toISOString(),
     };
@@ -148,7 +170,7 @@ export default function JobRequestFormScreen() {
     setIsSubmitted(true);
     Alert.alert(
       "Success!", 
-      `Job request submitted by ${technicianInfo.firstName} ${technicianInfo.lastName} from ${technicianInfo.companyName}. You can integrate this with Zapier to send data to your CRM.`,
+      `Job request submitted by ${technicianInfo.firstName} ${technicianInfo.lastName} from ${technicianInfo.companyName}. Refresh Duct Cleaning will reach out to the customer to schedule at our soonest availability.`,
       [
         {
           text: "OK",
@@ -161,6 +183,9 @@ export default function JobRequestFormScreen() {
   };
 
   const resetForm = () => {
+    setSquareFootage("");
+    setHvacSystems("");
+    setZipcode("");
     setCustomerName("");
     setPhone("");
     setEmail("");
@@ -188,14 +213,23 @@ export default function JobRequestFormScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <IconSymbol 
-            ios_icon_name="doc.text.fill" 
-            android_material_icon_name="description" 
-            size={56} 
-            color={colors.secondary} 
+          <Image 
+            source={require('@/assets/images/a078dd88-e996-4ae7-a894-90dfc7c624dc.png')}
+            style={styles.logo}
+            resizeMode="contain"
           />
           <Text style={styles.title}>Job Request Form</Text>
-          <Text style={styles.subtitle}>Collect customer and job information</Text>
+          <View style={styles.noticeBox}>
+            <IconSymbol 
+              ios_icon_name="info.circle.fill" 
+              android_material_icon_name="info" 
+              size={20} 
+              color={colors.secondary} 
+            />
+            <Text style={styles.noticeText}>
+              Refresh Duct Cleaning will reach out to the customer to schedule at our soonest availability.
+            </Text>
+          </View>
         </View>
 
         {technicianInfo && (
@@ -218,6 +252,56 @@ export default function JobRequestFormScreen() {
         )}
 
         <View style={styles.formContainer}>
+          <Text style={styles.sectionTitle}>Property Information</Text>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Square Footage *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter home square footage (e.g., 1500)"
+              placeholderTextColor={colors.textSecondary}
+              value={squareFootage}
+              onChangeText={setSquareFootage}
+              keyboardType="numeric"
+            />
+            <Text style={styles.helperText}>
+              This square footage includes 1 HVAC system in the price
+            </Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Additional HVAC Systems *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter number of additional HVAC systems (e.g., 2)"
+              placeholderTextColor={colors.textSecondary}
+              value={hvacSystems}
+              onChangeText={setHvacSystems}
+              keyboardType="numeric"
+            />
+            <Text style={styles.helperText}>
+              Enter 0 if only 1 HVAC system
+            </Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Zipcode *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter zipcode (e.g., 84003)"
+              placeholderTextColor={colors.textSecondary}
+              value={zipcode}
+              onChangeText={setZipcode}
+              keyboardType="numeric"
+              maxLength={5}
+            />
+            <Text style={styles.helperText}>
+              Location-based charges may apply
+            </Text>
+          </View>
+
+          <View style={styles.divider} />
+
           <Text style={styles.sectionTitle}>Customer Information</Text>
           
           <View style={styles.inputGroup}>
@@ -256,10 +340,6 @@ export default function JobRequestFormScreen() {
             />
           </View>
 
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionTitle}>Job Details</Text>
-
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Service Address *</Text>
             <TextInput
@@ -272,11 +352,15 @@ export default function JobRequestFormScreen() {
             />
           </View>
 
+          <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>Additional Details</Text>
+
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Job Description *</Text>
+            <Text style={styles.label}>Job Description (Optional)</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Describe the service needed..."
+              placeholder="Any additional notes or special requests..."
               placeholderTextColor={colors.textSecondary}
               value={jobDescription}
               onChangeText={setJobDescription}
@@ -302,6 +386,12 @@ export default function JobRequestFormScreen() {
               onPress={handleSubmit}
               activeOpacity={0.8}
             >
+              <IconSymbol 
+                ios_icon_name="paperplane.fill" 
+                android_material_icon_name="send" 
+                size={20} 
+                color="#ffffff" 
+              />
               <Text style={styles.submitButtonText}>Submit Job Request</Text>
             </TouchableOpacity>
           ) : (
@@ -313,6 +403,9 @@ export default function JobRequestFormScreen() {
                 color={colors.success} 
               />
               <Text style={styles.successText}>Job Request Submitted!</Text>
+              <Text style={styles.successSubtext}>
+                Refresh Duct Cleaning will contact the customer soon.
+              </Text>
               <TouchableOpacity 
                 style={styles.resetButton} 
                 onPress={resetForm}
@@ -329,7 +422,7 @@ export default function JobRequestFormScreen() {
             ios_icon_name="info.circle.fill" 
             android_material_icon_name="info" 
             size={20} 
-            color={colors.secondary} 
+            color={colors.accent} 
           />
           <Text style={styles.infoText}>
             Your technician information will be automatically included with this job request. To integrate with your CRM via Zapier, you&apos;ll need to set up a webhook URL in the code and create a Zap that receives this data.
@@ -364,17 +457,34 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     marginTop: 20,
   },
+  logo: {
+    width: 200,
+    height: 100,
+    marginBottom: 16,
+  },
   title: {
     fontSize: 28,
     fontWeight: '700',
     color: colors.text,
-    marginTop: 12,
-    marginBottom: 4,
+    marginBottom: 16,
   },
-  subtitle: {
+  noticeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.highlight,
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    borderWidth: 2,
+    borderColor: colors.secondary,
+    width: '100%',
+  },
+  noticeText: {
+    flex: 1,
     fontSize: 14,
-    fontWeight: '400',
-    color: colors.textSecondary,
+    fontWeight: '600',
+    color: colors.text,
+    lineHeight: 20,
   },
   technicianBanner: {
     flexDirection: 'row',
@@ -435,6 +545,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
+  helperText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
@@ -450,6 +566,9 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
   },
   submitButtonText: {
     color: '#ffffff',
@@ -465,6 +584,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.success,
     marginTop: 12,
+    marginBottom: 8,
+  },
+  successSubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
     marginBottom: 20,
   },
   resetButton: {
