@@ -7,7 +7,6 @@ export interface TechnicianInfo {
   lastName: string;
   phoneNumber: string;
   email: string;
-  profilePictureUri?: string;
 }
 
 const USER_DATA_KEY = '@technician_info';

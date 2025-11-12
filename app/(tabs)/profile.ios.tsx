@@ -10,7 +10,6 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  Image,
   Modal,
 } from "react-native";
 import { IconSymbol } from "@/components/IconSymbol";
@@ -19,7 +18,6 @@ import { GlassView } from "expo-glass-effect";
 import { colors } from "@/styles/commonStyles";
 import { getUserData, saveUserData, clearUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
-import * as ImagePicker from 'expo-image-picker';
 import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 import { supabase } from "@/app/integrations/supabase/client";
 
@@ -47,7 +45,6 @@ export default function ProfileScreen() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [profilePictureUri, setProfilePictureUri] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadUserData();
@@ -86,33 +83,11 @@ export default function ProfileScreen() {
         setLastName(data.lastName);
         setPhoneNumber(data.phoneNumber);
         setEmail(data.email);
-        setProfilePictureUri(data.profilePictureUri);
       }
     } catch (error) {
       console.error("Error loading user data:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (permissionResult.granted === false) {
-      Alert.alert("Permission Required", "Permission to access camera roll is required!");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setProfilePictureUri(result.assets[0].uri);
-      console.log('Profile picture selected:', result.assets[0].uri);
     }
   };
 
@@ -190,7 +165,6 @@ export default function ProfileScreen() {
         lastName,
         phoneNumber,
         email,
-        profilePictureUri,
       };
       
       await saveUserData(updatedData);
@@ -226,7 +200,6 @@ export default function ProfileScreen() {
       setLastName(userData.lastName);
       setPhoneNumber(userData.phoneNumber);
       setEmail(userData.email);
-      setProfilePictureUri(userData.profilePictureUri);
     }
     setEmailError("");
     setIsEditing(false);
@@ -307,28 +280,14 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={pickImage} activeOpacity={0.8} style={styles.profilePictureContainer}>
-            {profilePictureUri ? (
-              <Image source={{ uri: profilePictureUri }} style={styles.profilePicture} />
-            ) : (
-              <View style={styles.profilePicturePlaceholder}>
-                <IconSymbol 
-                  ios_icon_name="person.circle.fill" 
-                  android_material_icon_name="account_circle" 
-                  size={80} 
-                  color={colors.primary} 
-                />
-              </View>
-            )}
-            <View style={styles.cameraIconContainer}>
-              <IconSymbol 
-                ios_icon_name="camera.fill" 
-                android_material_icon_name="camera_alt" 
-                size={20} 
-                color="#ffffff" 
-              />
-            </View>
-          </TouchableOpacity>
+          <View style={styles.profileIconContainer}>
+            <IconSymbol 
+              ios_icon_name="person.circle.fill" 
+              android_material_icon_name="account_circle" 
+              size={100} 
+              color={colors.primary} 
+            />
+          </View>
           <Text style={styles.title}>Technician Profile</Text>
           <Text style={styles.subtitle}>
             {isEditing ? "Edit your information" : "Your account information"}
@@ -681,39 +640,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     marginTop: 20,
   },
-  profilePictureContainer: {
-    position: 'relative',
+  profileIconContainer: {
     marginBottom: 16,
-  },
-  profilePicture: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
-    borderColor: colors.primary,
-  },
-  profilePicturePlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: colors.primary,
-  },
-  cameraIconContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: colors.primary,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: colors.background,
   },
   title: {
     fontSize: 28,
@@ -906,10 +834,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  loadingText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
   pickerButton: {
     backgroundColor: colors.background,
     borderWidth: 1,
@@ -989,11 +913,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 40,
     gap: 12,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
   },
   emptySubtext: {
     fontSize: 14,
