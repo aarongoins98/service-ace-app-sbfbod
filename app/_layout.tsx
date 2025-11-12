@@ -6,7 +6,7 @@ import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, Alert, ErrorBoundary } from "react-native";
+import { useColorScheme, Alert } from "react-native";
 import { useNetworkState } from "expo-network";
 import {
   DarkTheme,
@@ -25,22 +25,36 @@ export const unstable_settings = {
 };
 
 // Error Boundary Component
-function AppErrorBoundary({ children }: { children: React.ReactNode }) {
-  return (
-    <ErrorBoundary
-      onError={(error, stackTrace) => {
-        console.error('App Error:', error);
-        console.error('Stack Trace:', stackTrace);
-        Alert.alert(
-          'Application Error',
-          'An unexpected error occurred. Please restart the app.',
-          [{ text: 'OK' }]
-        );
-      }}
-    >
-      {children}
-    </ErrorBoundary>
-  );
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('App Error:', error);
+    console.error('Error Info:', errorInfo);
+    Alert.alert(
+      'Application Error',
+      'An unexpected error occurred. Please restart the app.',
+      [{ text: 'OK' }]
+    );
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null;
+    }
+
+    return this.props.children;
+  }
 }
 
 export default function RootLayout() {
