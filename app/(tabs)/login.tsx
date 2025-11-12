@@ -36,6 +36,7 @@ export default function LoginScreen() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(true);
   const [companyName, setCompanyName] = useState("");
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [showCompanyPicker, setShowCompanyPicker] = useState(false);
   const [companySearchQuery, setCompanySearchQuery] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -130,6 +131,7 @@ export default function LoginScreen() {
     console.log("=== LOGIN BUTTON PRESSED ===");
     console.log("Current form state:", {
       companyName,
+      selectedCompanyId,
       firstName,
       lastName,
       phoneNumber,
@@ -177,11 +179,14 @@ export default function LoginScreen() {
     setIsLoading(true);
 
     try {
+      const phoneDigits = getPhoneDigits(phoneNumber);
+      
       const userData: TechnicianInfo = {
         companyName,
+        companyId: selectedCompanyId,
         firstName,
         lastName,
-        phoneNumber,
+        phone: phoneDigits,
         email,
       };
 
@@ -225,6 +230,7 @@ export default function LoginScreen() {
   const handleSelectCompany = (company: Company) => {
     console.log("Selected company:", company.name);
     setCompanyName(company.name);
+    setSelectedCompanyId(company.id);
     handleCloseCompanyPicker();
   };
 

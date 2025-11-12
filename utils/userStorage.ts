@@ -3,9 +3,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface TechnicianInfo {
   companyName: string;
+  companyId?: string;
   firstName: string;
   lastName: string;
-  phoneNumber: string;
+  phone: string;
   email: string;
 }
 

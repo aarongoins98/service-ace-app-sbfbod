@@ -268,7 +268,7 @@ export default function JobRequestFormScreen() {
         firstName: technicianInfo.firstName,
         lastName: technicianInfo.lastName,
         fullName: `${technicianInfo.firstName} ${technicianInfo.lastName}`,
-        phoneNumber: technicianInfo.phoneNumber,
+        phoneNumber: technicianInfo.phone,
         email: technicianInfo.email,
       },
       
@@ -544,7 +544,7 @@ export default function JobRequestFormScreen() {
                 />
                 <Text style={styles.technicianLabel}>Phone:</Text>
                 <Text style={styles.technicianPhone}>
-                  {technicianInfo.phoneNumber}
+                  {formatPhoneNumber(technicianInfo.phone)}
                 </Text>
               </View>
             </View>
