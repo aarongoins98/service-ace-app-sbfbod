@@ -41,31 +41,118 @@ const PRICING_CONFIG = {
   // Zipcode charges
   // Add or modify zipcodes and their associated charges here
   zipcodeCharges: {
-    // Example zipcodes - replace with your actual zipcodes
     // $0 charge zipcodes
-    '10001': 0,
-    '10002': 0,
-    '10003': 0,
+    '84003': 0,
+    '84004': 0,
+    '84005': 0,
+    '84009': 0,
+    '84020': 0,
+    '84042': 0,
+    '84043': 0,
+    '84045': 0,
+    '84047': 0,
+    '84057': 0,
+    '84058': 0,
+    '84059': 0,
+    '84062': 0,
+    '84065': 0,
+    '84070': 0,
+    '84084': 0,
+    '84088': 0,
+    '84093': 0,
+    '84094': 0,
+    '84095': 0,
+    '84097': 0,
+    '84601': 0,
+    '84606': 0,
+    '84660': 0,
     
     // $50 charge zipcodes
-    '20001': 50,
-    '20002': 50,
-    '20003': 50,
+    '84006': 50,
+    '84013': 50,
+    '84044': 50,
+    '84081': 50,
+    '84101': 50,
+    '84102': 50,
+    '84103': 50,
+    '84104': 50,
+    '84105': 50,
+    '84106': 50,
+    '84107': 50,
+    '84108': 50,
+    '84109': 50,
+    '84111': 50,
+    '84112': 50,
+    '84113': 50,
+    '84115': 50,
+    '84116': 50,
+    '84117': 50,
+    '84118': 50,
+    '84119': 50,
+    '84120': 50,
+    '84121': 50,
+    '84122': 50,
+    '84123': 50,
+    '84124': 50,
+    '84128': 50,
+    '84129': 50,
+    '84150': 50,
+    '84626': 50,
+    '84633': 50,
+    '84651': 50,
+    '84653': 50,
+    '84655': 50,
     
     // $100 charge zipcodes
-    '30001': 100,
-    '30002': 100,
-    '30003': 100,
+    '84010': 100,
+    '84014': 100,
+    '84025': 100,
+    '84037': 100,
+    '84040': 100,
+    '84041': 100,
+    '84049': 100,
+    '84054': 100,
+    '84087': 100,
+    '84645': 100,
     
     // $150 charge zipcodes
-    '40001': 150,
-    '40002': 150,
-    '40003': 150,
+    '84015': 150,
+    '84056': 150,
+    '84060': 150,
+    '84061': 150,
+    '84067': 150,
+    '84074': 150,
+    '84075': 150,
+    '84082': 150,
+    '84098': 150,
+    '84315': 150,
+    '84401': 150,
+    '84403': 150,
+    '84404': 150,
+    '84405': 150,
+    '84414': 150,
+    '84628': 150,
+    '84629': 150,
+    '84632': 150,
+    '84648': 150,
     
     // $200 charge zipcodes
-    '50001': 200,
-    '50002': 200,
-    '50003': 200,
+    '84017': 200,
+    '84029': 200,
+    '84036': 200,
+    '84050': 200,
+    '84071': 200,
+    '84302': 200,
+    '84310': 200,
+    '84317': 200,
+    '84324': 200,
+    '84340': 200,
+    '84526': 200,
+    '84627': 200,
+    '84639': 200,
+    '84646': 200,
+    '84647': 200,
+    '84662': 200,
   } as { [key: string]: number },
 };
 
@@ -210,7 +297,7 @@ export default function PricingToolScreen() {
             <Text style={styles.label}>Zipcode</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter zipcode (e.g., 10001)"
+              placeholder="Enter zipcode (e.g., 84003)"
               placeholderTextColor={colors.textSecondary}
               value={zipcode}
               onChangeText={setZipcode}
@@ -218,7 +305,7 @@ export default function PricingToolScreen() {
               maxLength={5}
             />
             <Text style={styles.helperText}>
-              Location-based charges may apply
+              Location-based charges may apply ($0-$200)
             </Text>
           </View>
 
@@ -330,7 +417,7 @@ export default function PricingToolScreen() {
               - Number of HVAC systems ($300 each)
             </Text>
             <Text style={styles.infoText}>
-              - Location-based zipcode charges
+              - Location-based zipcode charges ($0-$200)
             </Text>
           </View>
         </View>
