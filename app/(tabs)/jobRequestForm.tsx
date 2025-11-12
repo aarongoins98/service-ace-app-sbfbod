@@ -74,6 +74,30 @@ export default function JobRequestFormScreen() {
     setPhone(formatted);
   };
 
+  const formatDate = (text: string): string => {
+    // Remove all non-numeric characters
+    const cleaned = text.replace(/\D/g, '');
+    
+    // Format as MM/DD/YYYY
+    let formatted = '';
+    if (cleaned.length > 0) {
+      formatted = cleaned.substring(0, 2);
+      if (cleaned.length >= 3) {
+        formatted += '/' + cleaned.substring(2, 4);
+      }
+      if (cleaned.length >= 5) {
+        formatted += '/' + cleaned.substring(4, 8);
+      }
+    }
+    
+    return formatted;
+  };
+
+  const handlePreferredDateChange = (text: string) => {
+    const formatted = formatDate(text);
+    setPreferredDate(formatted);
+  };
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -110,7 +134,7 @@ export default function JobRequestFormScreen() {
 
     console.log("Technician Info:", JSON.stringify(technicianInfo, null, 2));
 
-    // Validate all required inputs
+    // Validate all required inputs (excluding jobDescription and preferredDate)
     if (!squareFootage || !hvacSystems || !customerFirstName || !customerLastName || 
         !phone || !email || !streetAddress || !city || !state || !zipcode) {
       console.log("ERROR: Missing required fields");
@@ -126,7 +150,7 @@ export default function JobRequestFormScreen() {
         state,
         zipcode
       });
-      Alert.alert("Missing Information", "Please fill in all required fields.");
+      Alert.alert("Missing Information", "Please fill in all required fields. Job Description and Preferred Date are optional.");
       return;
     }
 
@@ -153,6 +177,13 @@ export default function JobRequestFormScreen() {
     if (!validatePhone(phone)) {
       console.log("ERROR: Invalid phone:", phone);
       Alert.alert("Invalid Phone", "Please enter a valid 10-digit phone number.");
+      return;
+    }
+
+    // Validate zipcode is 5 digits
+    if (zipcode.length !== 5) {
+      console.log("ERROR: Invalid zipcode length:", zipcode);
+      Alert.alert("Invalid Input", "Please enter a valid 5-digit zipcode.");
       return;
     }
 
@@ -584,11 +615,16 @@ export default function JobRequestFormScreen() {
               placeholder="MM/DD/YYYY"
               placeholderTextColor={colors.textSecondary}
               value={preferredDate}
-              onChangeText={setPreferredDate}
+              onChangeText={handlePreferredDateChange}
+              keyboardType="numeric"
               returnKeyType="done"
               blurOnSubmit={true}
               editable={!isSubmitting}
+              maxLength={10}
             />
+            <Text style={styles.helperText}>
+              Format: MM/DD/YYYY (e.g., 12/25/2024)
+            </Text>
           </View>
 
           <TouchableOpacity 

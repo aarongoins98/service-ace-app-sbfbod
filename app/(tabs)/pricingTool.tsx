@@ -219,21 +219,33 @@ export default function PricingToolScreen() {
   };
 
   const calculateQuote = () => {
-    // Validate inputs
+    console.log("Calculate Quote - Validating inputs");
+    
+    // Validate all required fields are filled
     if (!squareFootage || !hvacSystems || !zipcode) {
-      Alert.alert("Missing Information", "Please fill in all fields to generate a quote.");
+      console.log("Missing required fields:", { squareFootage, hvacSystems, zipcode });
+      Alert.alert("Missing Information", "Please fill in all required fields (Square Footage, Additional HVAC Systems, and Zipcode) to generate a quote.");
       return;
     }
 
     const sqFt = parseFloat(squareFootage);
     if (isNaN(sqFt) || sqFt < 0) {
+      console.log("Invalid square footage:", squareFootage);
       Alert.alert("Invalid Input", "Please enter a valid square footage (0 or greater).");
       return;
     }
 
     const hvacCount = parseInt(hvacSystems);
     if (isNaN(hvacCount) || hvacCount < 0) {
+      console.log("Invalid HVAC count:", hvacSystems);
       Alert.alert("Invalid Input", "Please enter a valid number of additional HVAC systems (0 or greater).");
+      return;
+    }
+
+    // Validate zipcode is 5 digits
+    if (zipcode.length !== 5) {
+      console.log("Invalid zipcode length:", zipcode);
+      Alert.alert("Invalid Input", "Please enter a valid 5-digit zipcode.");
       return;
     }
 
@@ -317,7 +329,7 @@ export default function PricingToolScreen() {
 
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Square Footage</Text>
+            <Text style={styles.label}>Square Footage *</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter home square footage (e.g., 1500)"
@@ -332,7 +344,7 @@ export default function PricingToolScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Additional HVAC Systems</Text>
+            <Text style={styles.label}>Additional HVAC Systems *</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter number of additional HVAC systems (e.g., 2)"
@@ -347,7 +359,7 @@ export default function PricingToolScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Zipcode</Text>
+            <Text style={styles.label}>Zipcode *</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter zipcode (e.g., 84003)"
