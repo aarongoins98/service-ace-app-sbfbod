@@ -26,6 +26,9 @@ export default function TabLayout() {
       </NativeTabs>
       <Stack screenOptions={{ headerShown: false, presentation: 'modal' }}>
         <Stack.Screen name="login" />
+        <Stack.Screen name="adminLogin" />
+        <Stack.Screen name="zipcodeEditor" />
+        <Stack.Screen name="zipcodeAnalyzer" />
       </Stack>
     </>
   );

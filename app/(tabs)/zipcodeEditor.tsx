@@ -235,19 +235,34 @@ export default function ZipcodeEditorScreen() {
             />
             <Text style={styles.headerTitle}>Zipcode Manager</Text>
           </View>
-          <TouchableOpacity 
-            style={styles.logoutButton} 
-            onPress={handleLogout}
-            activeOpacity={0.8}
-          >
-            <IconSymbol 
-              ios_icon_name="rectangle.portrait.and.arrow.right" 
-              android_material_icon_name="logout" 
-              size={20} 
-              color={colors.error} 
-            />
-            <Text style={styles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.analyzerButton} 
+              onPress={() => router.push("/(tabs)/zipcodeAnalyzer")}
+              activeOpacity={0.8}
+            >
+              <IconSymbol 
+                ios_icon_name="chart.bar.fill" 
+                android_material_icon_name="analytics" 
+                size={20} 
+                color={colors.primary} 
+              />
+              <Text style={styles.analyzerButtonText}>Analyzer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.logoutButton} 
+              onPress={handleLogout}
+              activeOpacity={0.8}
+            >
+              <IconSymbol 
+                ios_icon_name="rectangle.portrait.and.arrow.right" 
+                android_material_icon_name="logout" 
+                size={20} 
+                color={colors.error} 
+              />
+              <Text style={styles.logoutButtonText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView 
@@ -476,6 +491,27 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: colors.text,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  analyzerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  analyzerButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
   },
   logoutButton: {
     flexDirection: 'row',
