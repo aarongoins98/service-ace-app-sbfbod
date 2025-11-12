@@ -288,70 +288,90 @@ export default function JobRequestFormScreen() {
     setIsSubmitting(true);
     console.log("Sending to Zapier webhook:", ZAPIER_WEBHOOK_URL);
     
+    let zapierSuccess = false;
+    let emailSuccess = false;
+    
     try {
       // Send to Zapier webhook
       console.log("Making fetch request to Zapier...");
-      const zapierResponse = await fetch(ZAPIER_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(jobData),
-      });
-      
-      console.log("Zapier Response received:");
-      console.log("Status:", zapierResponse.status);
-      console.log("Status Text:", zapierResponse.statusText);
-      console.log("OK:", zapierResponse.ok);
-      
-      // Try to read response body
-      let zapierResponseText = "";
       try {
-        zapierResponseText = await zapierResponse.text();
-        console.log("Zapier Response Body:", zapierResponseText);
-      } catch (textError) {
-        console.log("Could not read Zapier response text:", textError);
-      }
-      
-      if (!zapierResponse.ok) {
-        console.error('❌ Zapier webhook returned error');
-        console.error('Status:', zapierResponse.status);
-        console.error('Response:', zapierResponseText);
-      } else {
-        console.log('✅ Successfully sent to Zapier');
-      }
-
-      // Send email via Supabase Edge Function
-      console.log("Sending email via Supabase Edge Function...");
-      const { data: emailData, error: emailError } = await supabase.functions.invoke(
-        'send-job-request-email',
-        {
-          body: jobData,
+        const zapierResponse = await fetch(ZAPIER_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(jobData),
+        });
+        
+        console.log("Zapier Response received:");
+        console.log("Status:", zapierResponse.status);
+        console.log("Status Text:", zapierResponse.statusText);
+        console.log("OK:", zapierResponse.ok);
+        
+        // Try to read response body
+        let zapierResponseText = "";
+        try {
+          zapierResponseText = await zapierResponse.text();
+          console.log("Zapier Response Body:", zapierResponseText);
+        } catch (textError) {
+          console.log("Could not read Zapier response text:", textError);
         }
-      );
-
-      if (emailError) {
-        console.error('❌ Error sending email:', emailError);
-        console.error('Email error details:', JSON.stringify(emailError, null, 2));
-        // Don't fail the whole submission if email fails
-        console.log('⚠️ Email failed but continuing with submission');
-      } else {
-        console.log('✅ Email sent successfully:', emailData);
+        
+        if (!zapierResponse.ok) {
+          console.error('❌ Zapier webhook returned error');
+          console.error('Status:', zapierResponse.status);
+          console.error('Response:', zapierResponseText);
+        } else {
+          console.log('✅ Successfully sent to Zapier');
+          zapierSuccess = true;
+        }
+      } catch (zapierError) {
+        console.error('❌ Error sending to Zapier:', zapierError);
+        console.error('Zapier error details:', zapierError instanceof Error ? zapierError.message : String(zapierError));
       }
 
-      // Show success modal regardless of email status (as long as Zapier succeeded)
-      if (zapierResponse.ok) {
-        console.log('✅ Job request submitted successfully');
+      // Send email via Supabase Edge Function (without JWT - will be handled by the function)
+      console.log("Sending email via Supabase Edge Function...");
+      try {
+        const { data: emailData, error: emailError } = await supabase.functions.invoke(
+          'send-job-request-email',
+          {
+            body: jobData,
+          }
+        );
+
+        if (emailError) {
+          console.error('❌ Error sending email:', emailError);
+          console.error('Email error details:', JSON.stringify(emailError, null, 2));
+          console.log('⚠️ Email failed but continuing with submission');
+        } else {
+          console.log('✅ Email sent successfully:', emailData);
+          emailSuccess = true;
+        }
+      } catch (emailError) {
+        console.error('❌ Exception sending email:', emailError);
+        console.error('Email exception details:', emailError instanceof Error ? emailError.message : String(emailError));
+        console.log('⚠️ Email failed but continuing with submission');
+      }
+
+      // Show success if at least Zapier succeeded
+      if (zapierSuccess) {
+        console.log('✅ Job request submitted successfully to Zapier');
+        if (!emailSuccess) {
+          console.log('⚠️ Note: Email notification may not have been sent');
+        }
         setShowThankYouModal(true);
       } else {
+        // If Zapier failed, show error
+        console.error('❌ Zapier submission failed');
         Alert.alert(
           "Submission Error",
-          `There was an issue submitting the job request (Status: ${zapierResponse.status}). Please try again or contact support.`,
+          "There was an issue submitting the job request to Zapier. Please try again or contact support.\n\nIf the problem persists, you can manually send the information to agoins@refreshductcleaning.com",
           [{ text: "OK" }]
         );
       }
     } catch (error) {
-      console.error('❌ Error during submission:');
+      console.error('❌ Unexpected error during submission:');
       console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
       console.error('Error message:', error instanceof Error ? error.message : String(error));
       console.error('Full error:', error);
@@ -364,6 +384,8 @@ export default function JobRequestFormScreen() {
     } finally {
       setIsSubmitting(false);
       console.log("=== JOB REQUEST SUBMISSION ENDED ===");
+      console.log("Zapier Success:", zapierSuccess);
+      console.log("Email Success:", emailSuccess);
     }
   };
 
