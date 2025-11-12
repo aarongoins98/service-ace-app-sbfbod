@@ -464,7 +464,30 @@ export default function PricingToolScreen() {
                   />
                   <Text style={styles.cleanAndSealTitle}>Clean & Seal Service</Text>
                 </View>
-                <Text style={styles.cleanAndSealPrice}>${breakdown.cleanAndSealPrice.toFixed(2)}</Text>
+                
+                {/* Original Price with Strikethrough */}
+                <View style={styles.priceRow}>
+                  <Text style={styles.cleanAndSealOriginalPrice}>
+                    ${breakdown.cleanAndSealPrice.toFixed(2)}
+                  </Text>
+                </View>
+                
+                {/* Discounted Price */}
+                <View style={styles.discountedPriceContainer}>
+                  <View style={styles.discountBadge}>
+                    <IconSymbol 
+                      ios_icon_name="tag.fill" 
+                      android_material_icon_name="local_offer" 
+                      size={16} 
+                      color="#ffffff" 
+                    />
+                    <Text style={styles.discountBadgeText}>20% Partner Discount</Text>
+                  </View>
+                  <Text style={styles.cleanAndSealDiscountedPrice}>
+                    ${(breakdown.cleanAndSealPrice * 0.8).toFixed(2)}
+                  </Text>
+                </View>
+                
                 <Text style={styles.cleanAndSealDescription}>
                   {parseInt(hvacSystems) === 0 
                     ? `Based on ${getSqftRangeText(parseFloat(squareFootage))} with 1 HVAC system`
@@ -704,18 +727,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   cleanAndSealTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: colors.text,
   },
-  cleanAndSealPrice: {
-    fontSize: 36,
+  priceRow: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cleanAndSealOriginalPrice: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
+  },
+  discountedPriceContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  discountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 8,
+  },
+  discountBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  cleanAndSealDiscountedPrice: {
+    fontSize: 40,
     fontWeight: '700',
     color: colors.accent,
-    marginBottom: 8,
   },
   cleanAndSealDescription: {
     fontSize: 13,
