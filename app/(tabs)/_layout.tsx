@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Stack } from 'expo-router';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
+import { colors } from '@/styles/commonStyles';
 
 export default function TabLayout() {
   // Define the tabs configuration
@@ -10,6 +12,18 @@ export default function TabLayout() {
       route: '/(tabs)/(home)/',
       icon: 'home',
       label: 'Home',
+    },
+    {
+      name: 'pricingTool',
+      route: '/(tabs)/pricingTool',
+      icon: 'attach_money',
+      label: 'Pricing',
+    },
+    {
+      name: 'jobRequestForm',
+      route: '/(tabs)/jobRequestForm',
+      icon: 'description',
+      label: 'Job Request',
     },
     {
       name: 'profile',
@@ -25,10 +39,13 @@ export default function TabLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          animation: 'none', // Remove fade animation to prevent black screen flash
+          animation: 'none',
+          contentStyle: { backgroundColor: colors.background },
         }}
       >
         <Stack.Screen key="home" name="(home)" />
+        <Stack.Screen key="pricingTool" name="pricingTool" />
+        <Stack.Screen key="jobRequestForm" name="jobRequestForm" />
         <Stack.Screen key="profile" name="profile" />
       </Stack>
       <FloatingTabBar tabs={tabs} />
