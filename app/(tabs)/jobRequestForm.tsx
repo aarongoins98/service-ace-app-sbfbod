@@ -234,12 +234,19 @@ export default function JobRequestFormScreen() {
 
         {technicianInfo && (
           <View style={styles.technicianBanner}>
-            <IconSymbol 
-              ios_icon_name="person.crop.circle.fill" 
-              android_material_icon_name="account_circle" 
-              size={24} 
-              color={colors.primary} 
-            />
+            {technicianInfo.profilePictureUri ? (
+              <Image 
+                source={{ uri: technicianInfo.profilePictureUri }} 
+                style={styles.profilePicture}
+              />
+            ) : (
+              <IconSymbol 
+                ios_icon_name="person.crop.circle.fill" 
+                android_material_icon_name="account_circle" 
+                size={48} 
+                color={colors.primary} 
+              />
+            )}
             <View style={styles.technicianInfo}>
               <Text style={styles.technicianName}>
                 {technicianInfo.firstName} {technicianInfo.lastName}
@@ -498,6 +505,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
     elevation: 2,
+  },
+  profilePicture: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
   technicianInfo: {
     flex: 1,

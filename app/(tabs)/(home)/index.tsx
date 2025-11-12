@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { ScrollView, StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { ScrollView, StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Image } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { IconSymbol } from "@/components/IconSymbol";
 import { Link, useRouter } from "expo-router";
@@ -36,15 +36,14 @@ export default function HomeScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-        <IconSymbol 
-          ios_icon_name="wrench.and.screwdriver.fill" 
-          android_material_icon_name="build" 
-          size={72} 
-          color={colors.primary} 
+        <Image 
+          source={require('@/assets/images/a078dd88-e996-4ae7-a894-90dfc7c624dc.png')}
+          style={styles.logo}
+          resizeMode="contain"
         />
-        <Text style={styles.title}>HVAC Service Tool</Text>
+        <Text style={styles.title}>Refresh Pricing/Booking Tool</Text>
         <Text style={styles.subtitle}>
-          Professional pricing and job management for technicians
+          The most Refreshing way to order cleaner, healthy ducts.
         </Text>
       </View>
 
@@ -54,11 +53,10 @@ export default function HomeScreen() {
         </View>
       ) : technicianInfo ? (
         <View style={styles.welcomeCard}>
-          <IconSymbol 
-            ios_icon_name="hand.wave.fill" 
-            android_material_icon_name="waving_hand" 
-            size={32} 
-            color={colors.accent} 
+          <Image 
+            source={require('@/assets/images/a078dd88-e996-4ae7-a894-90dfc7c624dc.png')}
+            style={styles.welcomeLogo}
+            resizeMode="contain"
           />
           <Text style={styles.welcomeText}>
             Welcome back, {technicianInfo.firstName}!
@@ -217,6 +215,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
+  logo: {
+    width: 200,
+    height: 100,
+    marginBottom: 16,
+  },
   title: {
     fontSize: 32,
     fontWeight: '700',
@@ -246,6 +249,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
     elevation: 2,
+  },
+  welcomeLogo: {
+    width: 80,
+    height: 40,
+    marginBottom: 12,
   },
   welcomeText: {
     fontSize: 24,

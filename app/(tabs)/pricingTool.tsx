@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Image,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -299,6 +300,11 @@ export default function PricingToolScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
+          <Image 
+            source={require('@/assets/images/a078dd88-e996-4ae7-a894-90dfc7c624dc.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <IconSymbol 
             ios_icon_name="dollarsign.circle.fill" 
             android_material_icon_name="attach_money" 
@@ -563,6 +569,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
     marginTop: 20,
+  },
+  logo: {
+    width: 200,
+    height: 100,
+    marginBottom: 16,
   },
   title: {
     fontSize: 28,
