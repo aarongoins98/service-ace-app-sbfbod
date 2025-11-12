@@ -123,13 +123,17 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
+    console.log("Login button pressed");
+    
     // Validate inputs
     if (!companyName || !firstName || !lastName || !phoneNumber || !email) {
+      console.log("Missing fields detected");
       Alert.alert("Missing Information", "Please fill in all fields.");
       return;
     }
 
     if (!validateEmail(email)) {
+      console.log("Invalid email format");
       setEmailError("Invalid email format. Please use format: xxx@xxx.xx");
       Alert.alert(
         "Invalid Email Format", 
@@ -139,10 +143,12 @@ export default function LoginScreen() {
     }
 
     if (!validatePhone(phoneNumber)) {
+      console.log("Invalid phone number");
       Alert.alert("Invalid Phone", "Please enter a valid 10-digit phone number.");
       return;
     }
 
+    console.log("All validations passed, starting login process");
     setIsLoading(true);
 
     try {
@@ -154,11 +160,12 @@ export default function LoginScreen() {
         email,
       };
 
+      console.log("Saving user data:", userData);
       await saveUserData(userData);
-      console.log("User data saved successfully, redirecting to home page");
+      console.log("User data saved successfully");
 
-      // Redirect to home page after successful login
-      setIsLoading(false);
+      // Navigate to home page
+      console.log("Navigating to home page");
       router.replace("/(tabs)/(home)/");
       
       // Show success message after navigation
@@ -168,8 +175,10 @@ export default function LoginScreen() {
           "Your information has been saved successfully."
         );
       }, 500);
+      
+      setIsLoading(false);
     } catch (error) {
-      console.error("Error saving user data:", error);
+      console.error("Error during login process:", error);
       setIsLoading(false);
       Alert.alert("Error", "Failed to save your information. Please try again.");
     }
@@ -313,9 +322,14 @@ export default function LoginScreen() {
               activeOpacity={0.8}
               disabled={isLoading}
             >
-              <Text style={styles.loginButtonText}>
-                {isLoading ? "Saving..." : "Save & Continue"}
-              </Text>
+              {isLoading ? (
+                <View style={styles.buttonContent}>
+                  <ActivityIndicator size="small" color="#ffffff" />
+                  <Text style={styles.loginButtonText}>Saving...</Text>
+                </View>
+              ) : (
+                <Text style={styles.loginButtonText}>Save & Continue</Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -561,6 +575,11 @@ const styles = StyleSheet.create({
   },
   loginButtonDisabled: {
     opacity: 0.6,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   loginButtonText: {
     color: '#ffffff',
