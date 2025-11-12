@@ -509,26 +509,79 @@ export default function JobRequestFormScreen() {
           </View>
         </View>
 
-        <View style={styles.technicianBanner}>
-          {technicianInfo.profilePictureUri ? (
-            <Image 
-              source={{ uri: technicianInfo.profilePictureUri }} 
-              style={styles.profilePicture}
-            />
-          ) : (
+        {/* Enhanced Technician Banner with Clear Labeling */}
+        <View style={styles.technicianSection}>
+          <View style={styles.technicianSectionHeader}>
             <IconSymbol 
-              ios_icon_name="person.crop.circle.fill" 
-              android_material_icon_name="account_circle" 
-              size={48} 
+              ios_icon_name="person.badge.shield.checkmark.fill" 
+              android_material_icon_name="verified_user" 
+              size={24} 
               color={colors.primary} 
             />
-          )}
-          <View style={styles.technicianInfo}>
-            <Text style={styles.technicianName}>
-              {technicianInfo.firstName} {technicianInfo.lastName}
-            </Text>
-            <Text style={styles.technicianCompany}>
-              {technicianInfo.companyName}
+            <Text style={styles.technicianSectionTitle}>YOUR INFORMATION (PRE-FILLED)</Text>
+          </View>
+          <View style={styles.technicianBanner}>
+            {technicianInfo.profilePictureUri ? (
+              <Image 
+                source={{ uri: technicianInfo.profilePictureUri }} 
+                style={styles.profilePicture}
+              />
+            ) : (
+              <IconSymbol 
+                ios_icon_name="person.crop.circle.fill" 
+                android_material_icon_name="account_circle" 
+                size={56} 
+                color={colors.primary} 
+              />
+            )}
+            <View style={styles.technicianInfo}>
+              <View style={styles.technicianInfoRow}>
+                <IconSymbol 
+                  ios_icon_name="person.fill" 
+                  android_material_icon_name="person" 
+                  size={16} 
+                  color={colors.textSecondary} 
+                />
+                <Text style={styles.technicianLabel}>Technician:</Text>
+                <Text style={styles.technicianName}>
+                  {technicianInfo.firstName} {technicianInfo.lastName}
+                </Text>
+              </View>
+              <View style={styles.technicianInfoRow}>
+                <IconSymbol 
+                  ios_icon_name="building.2.fill" 
+                  android_material_icon_name="business" 
+                  size={16} 
+                  color={colors.textSecondary} 
+                />
+                <Text style={styles.technicianLabel}>Company:</Text>
+                <Text style={styles.technicianCompany}>
+                  {technicianInfo.companyName}
+                </Text>
+              </View>
+              <View style={styles.technicianInfoRow}>
+                <IconSymbol 
+                  ios_icon_name="phone.fill" 
+                  android_material_icon_name="phone" 
+                  size={16} 
+                  color={colors.textSecondary} 
+                />
+                <Text style={styles.technicianLabel}>Phone:</Text>
+                <Text style={styles.technicianPhone}>
+                  {technicianInfo.phoneNumber}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.technicianNote}>
+            <IconSymbol 
+              ios_icon_name="lock.fill" 
+              android_material_icon_name="lock" 
+              size={16} 
+              color={colors.accent} 
+            />
+            <Text style={styles.technicianNoteText}>
+              This is your technician information. It will be included with the job request for dispatching purposes.
             </Text>
           </View>
         </View>
@@ -607,10 +660,32 @@ export default function JobRequestFormScreen() {
 
           <View style={styles.divider} />
 
-          <Text style={styles.sectionTitle}>Customer Information</Text>
+          {/* Customer Information Section with Clear Notice */}
+          <View style={styles.customerSectionHeader}>
+            <View style={styles.customerHeaderTop}>
+              <IconSymbol 
+                ios_icon_name="person.crop.square.fill" 
+                android_material_icon_name="contact_page" 
+                size={24} 
+                color={colors.secondary} 
+              />
+              <Text style={styles.sectionTitle}>Customer Information</Text>
+            </View>
+            <View style={styles.customerNotice}>
+              <IconSymbol 
+                ios_icon_name="exclamationmark.triangle.fill" 
+                android_material_icon_name="warning" 
+                size={18} 
+                color={colors.warning || '#FF9500'} 
+              />
+              <Text style={styles.customerNoticeText}>
+                Enter the CUSTOMER&apos;S contact information below (NOT your technician info). This is for dispatching the service to the customer&apos;s location.
+              </Text>
+            </View>
+          </View>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>First Name *</Text>
+            <Text style={styles.label}>Customer First Name *</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter customer first name"
@@ -624,7 +699,7 @@ export default function JobRequestFormScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Last Name *</Text>
+            <Text style={styles.label}>Customer Last Name *</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter customer last name"
@@ -638,7 +713,7 @@ export default function JobRequestFormScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number *</Text>
+            <Text style={styles.label}>Customer Phone Number *</Text>
             <TextInput
               style={styles.input}
               placeholder="(000)000-0000"
@@ -654,7 +729,7 @@ export default function JobRequestFormScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address *</Text>
+            <Text style={styles.label}>Customer Email Address *</Text>
             <TextInput
               style={[styles.input, emailError ? styles.inputError : null]}
               placeholder="customer@example.com"
@@ -954,39 +1029,91 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: 20,
   },
+  technicianSection: {
+    marginBottom: 24,
+  },
+  technicianSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  technicianSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.primary,
+    letterSpacing: 0.5,
+  },
   technicianBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-    elevation: 2,
+    borderRadius: 16,
+    padding: 20,
+    gap: 16,
+    borderWidth: 3,
+    borderColor: colors.primary,
+    boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.12)',
+    elevation: 4,
   },
   profilePicture: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 3,
     borderColor: colors.primary,
   },
   technicianInfo: {
     flex: 1,
+    gap: 8,
+  },
+  technicianInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  technicianLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    minWidth: 80,
   },
   technicianName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 2,
+    flex: 1,
   },
   technicianCompany: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary,
+    flex: 1,
+  },
+  technicianPhone: {
     fontSize: 14,
-    fontWeight: '400',
-    color: colors.textSecondary,
+    fontWeight: '500',
+    color: colors.text,
+    flex: 1,
+  },
+  technicianNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.highlight,
+    borderRadius: 10,
+    padding: 12,
+    gap: 10,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  technicianNoteText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text,
+    lineHeight: 18,
   },
   formContainer: {
     backgroundColor: colors.card,
@@ -1001,6 +1128,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     marginBottom: 16,
+  },
+  customerSectionHeader: {
+    marginBottom: 20,
+  },
+  customerHeaderTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  customerNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FFF3CD',
+    borderRadius: 10,
+    padding: 14,
+    gap: 10,
+    borderWidth: 2,
+    borderColor: '#FF9500',
+  },
+  customerNoticeText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#856404',
+    lineHeight: 20,
   },
   inputGroup: {
     marginBottom: 20,
