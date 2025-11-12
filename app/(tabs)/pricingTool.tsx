@@ -35,6 +35,19 @@ const PRICING_CONFIG = {
     { min: 10000, max: Infinity, price: 900 },
   ],
   
+  // Clean & Seal pricing ranges (for single HVAC system)
+  cleanAndSealRanges: [
+    { min: 0, max: 1999, price: 2500 },
+    { min: 2000, max: 2999, price: 2750 },
+    { min: 3000, max: 3999, price: 3000 },
+    { min: 4000, max: 4999, price: 3250 },
+    { min: 5000, max: 5999, price: 3500 },
+    { min: 6000, max: Infinity, price: 3750 },
+  ],
+  
+  // Clean & Seal price per HVAC system (for multiple systems)
+  cleanAndSealPerHvac: 2000,
+  
   // HVAC system charge per unit
   hvacSystemCharge: 300,
   
@@ -173,6 +186,7 @@ export default function PricingToolScreen() {
     subtotal: number;
     discount: number;
     total: number;
+    cleanAndSealPrice: number;
   } | null>(null);
 
   const getSqftCharge = (sqft: number): number => {
@@ -186,6 +200,21 @@ export default function PricingToolScreen() {
     // Remove any spaces or dashes from zipcode
     const cleanZip = zip.replace(/[\s-]/g, '');
     return PRICING_CONFIG.zipcodeCharges[cleanZip] ?? 0;
+  };
+
+  const getCleanAndSealPrice = (sqft: number, hvacCount: number): number => {
+    // If only 1 HVAC system (0 additional), price is based on square footage
+    if (hvacCount === 0) {
+      const range = PRICING_CONFIG.cleanAndSealRanges.find(
+        r => sqft >= r.min && sqft <= r.max
+      );
+      return range ? range.price : PRICING_CONFIG.cleanAndSealRanges[PRICING_CONFIG.cleanAndSealRanges.length - 1].price;
+    } else {
+      // Multiple HVAC systems: $2000 per system
+      // hvacCount is "additional" systems, so total systems = hvacCount + 1
+      const totalSystems = hvacCount + 1;
+      return totalSystems * PRICING_CONFIG.cleanAndSealPerHvac;
+    }
   };
 
   const calculateQuote = () => {
@@ -217,6 +246,9 @@ export default function PricingToolScreen() {
     const discount = subtotal * (PRICING_CONFIG.partnerDiscountPercent / 100);
     const total = subtotal - discount;
 
+    // Calculate Clean & Seal price
+    const cleanAndSealPrice = getCleanAndSealPrice(sqFt, hvacCount);
+
     // Set the breakdown and total
     setBreakdown({
       sqftCharge,
@@ -225,6 +257,7 @@ export default function PricingToolScreen() {
       subtotal,
       discount,
       total,
+      cleanAndSealPrice,
     });
     setQuote(total);
 
@@ -238,6 +271,7 @@ export default function PricingToolScreen() {
       subtotal,
       discount,
       total,
+      cleanAndSealPrice,
     });
   };
 
@@ -338,7 +372,7 @@ export default function PricingToolScreen() {
 
           {quote !== null && breakdown && (
             <View style={styles.quoteContainer}>
-              <Text style={styles.quoteLabel}>Estimated Quote</Text>
+              <Text style={styles.quoteLabel}>Duct Cleaning Quote</Text>
               <Text style={styles.quoteAmount}>${quote.toFixed(2)}</Text>
               
               <View style={styles.breakdownContainer}>
@@ -419,6 +453,26 @@ export default function PricingToolScreen() {
                 </View>
               </View>
 
+              {/* Clean & Seal Quote Section */}
+              <View style={styles.cleanAndSealContainer}>
+                <View style={styles.cleanAndSealHeader}>
+                  <IconSymbol 
+                    ios_icon_name="sparkles" 
+                    android_material_icon_name="auto_awesome" 
+                    size={24} 
+                    color={colors.accent} 
+                  />
+                  <Text style={styles.cleanAndSealTitle}>Clean & Seal Service</Text>
+                </View>
+                <Text style={styles.cleanAndSealPrice}>${breakdown.cleanAndSealPrice.toFixed(2)}</Text>
+                <Text style={styles.cleanAndSealDescription}>
+                  {parseInt(hvacSystems) === 0 
+                    ? `Based on ${getSqftRangeText(parseFloat(squareFootage))} with 1 HVAC system`
+                    : `Based on ${parseInt(hvacSystems) + 1} total HVAC systems ($${PRICING_CONFIG.cleanAndSealPerHvac} per system)`
+                  }
+                </Text>
+              </View>
+
               <Text style={styles.quoteNote}>
                 This is an estimated quote based on the provided information
               </Text>
@@ -456,6 +510,9 @@ export default function PricingToolScreen() {
             </Text>
             <Text style={styles.infoText}>
               - 20% Partner Discount automatically applied
+            </Text>
+            <Text style={styles.infoText}>
+              - Clean & Seal: $2,500+ (sqft-based) or $2,000 per HVAC system
             </Text>
           </View>
         </View>
@@ -632,6 +689,39 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.primary,
+  },
+  cleanAndSealContainer: {
+    width: '100%',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: colors.accent,
+    alignItems: 'center',
+  },
+  cleanAndSealHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  cleanAndSealTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  cleanAndSealPrice: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: colors.accent,
+    marginBottom: 8,
+  },
+  cleanAndSealDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   quoteNote: {
     fontSize: 12,
