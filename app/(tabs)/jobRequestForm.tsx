@@ -29,22 +29,23 @@ export default function JobRequestFormScreen() {
   const [isLoadingTechnician, setIsLoadingTechnician] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Same fields as Pricing Tool (removed zipcode from here)
+  // Property Information
   const [squareFootage, setSquareFootage] = useState("");
   const [hvacSystems, setHvacSystems] = useState("");
   
-  // Customer information
+  // Customer Information
   const [customerFirstName, setCustomerFirstName] = useState("");
   const [customerLastName, setCustomerLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   
-  // Broken out address fields
+  // Service Address
   const [streetAddress, setStreetAddress] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zipcode, setZipcode] = useState("");
   
+  // Additional Details
   const [jobDescription, setJobDescription] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -131,38 +132,59 @@ export default function JobRequestFormScreen() {
       return;
     }
 
-    // Prepare data for submission including technician info
+    // Prepare comprehensive data for Zapier webhook
     const jobData = {
-      // Technician Information
-      technician: {
+      // Property Information
+      propertyInformation: {
+        squareFootage: sqFt,
+        additionalHvacSystems: hvacCount,
+        totalHvacSystems: hvacCount + 1,
+      },
+      
+      // Customer Information
+      customerInformation: {
+        firstName: customerFirstName,
+        lastName: customerLastName,
+        fullName: `${customerFirstName} ${customerLastName}`,
+        phone: phone,
+        email: email,
+      },
+      
+      // Service Address
+      serviceAddress: {
+        streetAddress: streetAddress,
+        city: city,
+        state: state,
+        zipcode: zipcode,
+        fullAddress: `${streetAddress}, ${city}, ${state} ${zipcode}`,
+      },
+      
+      // Additional Details
+      additionalDetails: {
+        jobDescription: jobDescription || "Duct cleaning service requested",
+        preferredDate: preferredDate || "Not specified",
+      },
+      
+      // Technician Information (who submitted the request)
+      technicianInformation: {
         companyName: technicianInfo.companyName,
         firstName: technicianInfo.firstName,
         lastName: technicianInfo.lastName,
+        fullName: `${technicianInfo.firstName} ${technicianInfo.lastName}`,
         phoneNumber: technicianInfo.phoneNumber,
         email: technicianInfo.email,
       },
-      // Customer Information with broken out address
-      customer: {
-        firstName: customerFirstName,
-        lastName: customerLastName,
-        phone,
-        email,
-        streetAddress,
-        city,
-        state,
-        zipcode,
+      
+      // Metadata
+      metadata: {
+        submittedAt: new Date().toISOString(),
+        submittedDate: new Date().toLocaleDateString(),
+        submittedTime: new Date().toLocaleTimeString(),
+        notificationEmail: "agoins@refreshductcleaning.com",
       },
-      // Job Details
-      squareFootage: sqFt,
-      additionalHvacSystems: hvacCount,
-      jobDescription: jobDescription || "Duct cleaning service requested",
-      preferredDate: preferredDate || "Not specified",
-      submittedAt: new Date().toISOString(),
-      // Email notification recipient
-      notificationEmail: "agoins@refreshductcleaning.com",
     };
 
-    console.log("Job Request Data with Technician Info:", jobData);
+    console.log("Complete Job Request Data being sent to Zapier:", JSON.stringify(jobData, null, 2));
 
     // Send to Zapier webhook
     setIsSubmitting(true);
