@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   ScrollView, 
   StyleSheet, 
@@ -10,14 +10,12 @@ import {
   Alert,
   Platform,
   Image,
-  ActivityIndicator,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { supabase } from "@/app/integrations/supabase/client";
 
 // Pricing Configuration
 // You can easily update these values to adjust pricing
@@ -57,6 +55,123 @@ const PRICING_CONFIG = {
   
   // Partner discount percentage
   partnerDiscountPercent: 20,
+  
+  // Zipcode charges
+  // Add or modify zipcodes and their associated charges here
+  zipcodeCharges: {
+    // $0 charge zipcodes
+    '84003': 0,
+    '84004': 0,
+    '84005': 0,
+    '84009': 0,
+    '84020': 0,
+    '84042': 0,
+    '84043': 0,
+    '84045': 0,
+    '84047': 0,
+    '84057': 0,
+    '84058': 0,
+    '84059': 0,
+    '84062': 0,
+    '84065': 0,
+    '84070': 0,
+    '84084': 0,
+    '84088': 0,
+    '84093': 0,
+    '84094': 0,
+    '84095': 0,
+    '84097': 0,
+    '84601': 0,
+    '84606': 0,
+    '84660': 0,
+    
+    // $50 charge zipcodes
+    '84006': 50,
+    '84013': 50,
+    '84044': 50,
+    '84081': 50,
+    '84101': 50,
+    '84102': 50,
+    '84103': 50,
+    '84104': 50,
+    '84105': 50,
+    '84106': 50,
+    '84107': 50,
+    '84108': 50,
+    '84109': 50,
+    '84111': 50,
+    '84112': 50,
+    '84113': 50,
+    '84115': 50,
+    '84116': 50,
+    '84117': 50,
+    '84118': 50,
+    '84119': 50,
+    '84120': 50,
+    '84121': 50,
+    '84122': 50,
+    '84123': 50,
+    '84124': 50,
+    '84128': 50,
+    '84129': 50,
+    '84150': 50,
+    '84626': 50,
+    '84633': 50,
+    '84651': 50,
+    '84653': 50,
+    '84655': 50,
+    
+    // $100 charge zipcodes
+    '84010': 100,
+    '84014': 100,
+    '84025': 100,
+    '84037': 100,
+    '84040': 100,
+    '84041': 100,
+    '84049': 100,
+    '84054': 100,
+    '84087': 100,
+    '84645': 100,
+    
+    // $150 charge zipcodes
+    '84015': 150,
+    '84056': 150,
+    '84060': 150,
+    '84061': 150,
+    '84067': 150,
+    '84074': 150,
+    '84075': 150,
+    '84082': 150,
+    '84098': 150,
+    '84315': 150,
+    '84401': 150,
+    '84403': 150,
+    '84404': 150,
+    '84405': 150,
+    '84414': 150,
+    '84628': 150,
+    '84629': 150,
+    '84632': 150,
+    '84648': 150,
+    
+    // $200 charge zipcodes
+    '84017': 200,
+    '84029': 200,
+    '84036': 200,
+    '84050': 200,
+    '84071': 200,
+    '84302': 200,
+    '84310': 200,
+    '84317': 200,
+    '84324': 200,
+    '84340': 200,
+    '84526': 200,
+    '84627': 200,
+    '84639': 200,
+    '84646': 200,
+    '84647': 200,
+    '84662': 200,
+  } as { [key: string]: number },
 };
 
 export default function PricingToolScreen() {
@@ -76,40 +191,6 @@ export default function PricingToolScreen() {
     total: number;
     cleanAndSealPrice: number;
   } | null>(null);
-  const [zipcodeCharges, setZipcodeCharges] = useState<{ [key: string]: number }>({});
-  const [isLoadingZipcodes, setIsLoadingZipcodes] = useState(true);
-
-  useEffect(() => {
-    loadZipcodeCharges();
-  }, []);
-
-  const loadZipcodeCharges = async () => {
-    try {
-      setIsLoadingZipcodes(true);
-      const { data, error } = await supabase
-        .from('zipcode_charges')
-        .select('zipcode, charge');
-
-      if (error) {
-        console.error("Error loading zipcode charges:", error);
-        Alert.alert("Warning", "Failed to load zipcode charges. Using default values.");
-        return;
-      }
-
-      const chargesMap: { [key: string]: number } = {};
-      data?.forEach(item => {
-        chargesMap[item.zipcode] = item.charge;
-      });
-      
-      setZipcodeCharges(chargesMap);
-      console.log(`Loaded ${data?.length || 0} zipcode charges from database`);
-    } catch (error) {
-      console.error("Error loading zipcode charges:", error);
-      Alert.alert("Warning", "Failed to load zipcode charges. Using default values.");
-    } finally {
-      setIsLoadingZipcodes(false);
-    }
-  };
 
   const getSqftCharge = (sqft: number): number => {
     const range = PRICING_CONFIG.sqftRanges.find(
@@ -121,7 +202,7 @@ export default function PricingToolScreen() {
   const getZipcodeCharge = (zip: string): number => {
     // Remove any spaces or dashes from zipcode
     const cleanZip = zip.replace(/[\s-]/g, '');
-    return zipcodeCharges[cleanZip] ?? 0;
+    return PRICING_CONFIG.zipcodeCharges[cleanZip] ?? 0;
   };
 
   const getCleanAndSealPrice = (sqft: number, hvacCount: number): number => {
@@ -242,17 +323,6 @@ export default function PricingToolScreen() {
       },
     });
   };
-
-  if (isLoadingZipcodes) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading pricing data...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -409,141 +479,134 @@ export default function PricingToolScreen() {
                       Partner Discount ({PRICING_CONFIG.partnerDiscountPercent}%)
                     </Text>
                   </View>
-                  <Text style={styles.breakdownDiscountValue}>-Great! Now let me create the admin login page and zipcode editor. I'll create the necessary files:
+                  <Text style={styles.breakdownDiscountValue}>-${breakdown.discount.toFixed(2)}</Text>
+                </View>
 
-<write file="app/(tabs)/adminLogin.tsx">
-import React, { useState } from "react";
-import { 
-  ScrollView, 
-  StyleSheet, 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity,
-  Alert,
-  Platform,
-  KeyboardAvoidingView,
-} from "react-native";
-import { useTheme } from "@react-navigation/native";
-import { colors } from "@/styles/commonStyles";
-import { IconSymbol } from "@/components/IconSymbol";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+                <View style={styles.breakdownDivider} />
 
-const ADMIN_PASSWORD = "Refresht1m3!";
-const ADMIN_SESSION_KEY = "admin_session";
+                <View style={styles.breakdownRow}>
+                  <Text style={styles.breakdownTotalLabel}>Total</Text>
+                  <Text style={styles.breakdownTotalValue}>${breakdown.total.toFixed(2)}</Text>
+                </View>
+              </View>
 
-export default function AdminLoginScreen() {
-  const theme = useTheme();
-  const router = useRouter();
-  
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+              {/* Submit Job Request Button for Duct Cleaning */}
+              <TouchableOpacity 
+                style={styles.requestJobButton} 
+                onPress={() => handleRequestJob('duct-cleaning')}
+                activeOpacity={0.8}
+              >
+                <IconSymbol 
+                  ios_icon_name="paperplane.fill" 
+                  android_material_icon_name="send" 
+                  size={20} 
+                  color="#ffffff" 
+                />
+                <Text style={styles.requestJobButtonText}>Request Duct Cleaning Job</Text>
+              </TouchableOpacity>
 
-  const handleLogin = async () => {
-    if (!password) {
-      Alert.alert("Missing Information", "Please enter the admin password.");
-      return;
-    }
+              {/* Clean & Seal Quote Section */}
+              <View style={styles.cleanAndSealContainer}>
+                <View style={styles.cleanAndSealHeader}>
+                  <IconSymbol 
+                    ios_icon_name="sparkles" 
+                    android_material_icon_name="auto_awesome" 
+                    size={24} 
+                    color={colors.accent} 
+                  />
+                  <Text style={styles.cleanAndSealTitle}>Clean & Seal Service</Text>
+                </View>
+                
+                {/* Original Price with Strikethrough */}
+                <View style={styles.priceRow}>
+                  <Text style={styles.cleanAndSealOriginalPrice}>
+                    ${breakdown.cleanAndSealPrice.toFixed(2)}
+                  </Text>
+                </View>
+                
+                {/* Discounted Price */}
+                <View style={styles.discountedPriceContainer}>
+                  <View style={styles.discountBadge}>
+                    <IconSymbol 
+                      ios_icon_name="tag.fill" 
+                      android_material_icon_name="local_offer" 
+                      size={16} 
+                      color="#ffffff" 
+                    />
+                    <Text style={styles.discountBadgeText}>20% Partner Discount</Text>
+                  </View>
+                  <Text style={styles.cleanAndSealDiscountedPrice}>
+                    ${(breakdown.cleanAndSealPrice * 0.8).toFixed(2)}
+                  </Text>
+                </View>
+                
+                <Text style={styles.cleanAndSealDescription}>
+                  {parseInt(hvacSystems) === 0 
+                    ? `Based on ${getSqftRangeText(parseFloat(squareFootage))} with 1 HVAC system`
+                    : `Based on ${parseInt(hvacSystems) + 1} total HVAC systems ($${PRICING_CONFIG.cleanAndSealPerHvac} per system)`
+                  }
+                </Text>
+              </View>
 
-    setIsLoading(true);
+              {/* Submit Job Request Button for Clean & Seal */}
+              <TouchableOpacity 
+                style={styles.requestJobButtonSecondary} 
+                onPress={() => handleRequestJob('clean-and-seal')}
+                activeOpacity={0.8}
+              >
+                <IconSymbol 
+                  ios_icon_name="paperplane.fill" 
+                  android_material_icon_name="send" 
+                  size={20} 
+                  color={colors.accent} 
+                />
+                <Text style={styles.requestJobButtonSecondaryText}>Request Clean & Seal Job</Text>
+              </TouchableOpacity>
 
-    try {
-      if (password === ADMIN_PASSWORD) {
-        // Save admin session
-        await AsyncStorage.setItem(ADMIN_SESSION_KEY, "true");
-        console.log("Admin login successful");
-        
-        // Navigate to zipcode editor
-        router.replace("/(tabs)/zipcodeEditor");
-        
-        // Show success message
-        setTimeout(() => {
-          Alert.alert("Success", "Admin login successful!");
-        }, 500);
-      } else {
-        Alert.alert("Access Denied", "Incorrect password. Please try again.");
-        setPassword("");
-      }
-    } catch (error) {
-      console.error("Error during admin login:", error);
-      Alert.alert("Error", "An error occurred during login. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.header}>
-            <IconSymbol 
-              ios_icon_name="lock.shield.fill" 
-              android_material_icon_name="admin_panel_settings" 
-              size={72} 
-              color={colors.primary} 
-            />
-            <Text style={styles.title}>Admin Login</Text>
-            <Text style={styles.subtitle}>
-              Enter admin password to access zipcode management
-            </Text>
-          </View>
-
-          <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Admin Password *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter admin password"
-                placeholderTextColor={colors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
-              onPress={handleLogin}
-              activeOpacity={0.8}
-              disabled={isLoading}
-            >
-              <IconSymbol 
-                ios_icon_name="arrow.right.circle.fill" 
-                android_material_icon_name="login" 
-                size={20} 
-                color="#ffffff" 
-              />
-              <Text style={styles.loginButtonText}>
-                {isLoading ? "Logging in..." : "Login"}
+              <Text style={styles.quoteNote}>
+                This is an estimated quote based on the provided information
               </Text>
-            </TouchableOpacity>
-          </View>
+              
+              <TouchableOpacity 
+                style={styles.resetButton} 
+                onPress={resetForm}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.resetButtonText}>Reset Form</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
 
-          <View style={styles.infoBox}>
-            <IconSymbol 
-              ios_icon_name="info.circle.fill" 
-              android_material_icon_name="info" 
-              size={20} 
-              color={colors.secondary} 
-            />
+        <View style={styles.infoBox}>
+          <IconSymbol 
+            ios_icon_name="info.circle.fill" 
+            android_material_icon_name="info" 
+            size={20} 
+            color={colors.primary} 
+          />
+          <View style={styles.infoTextContainer}>
             <Text style={styles.infoText}>
-              Admin access is required to manage zipcode charges. Contact your system administrator if you need access.
+              Pricing is calculated based on:
+            </Text>
+            <Text style={styles.infoText}>
+              - Square footage range (starting at $400, includes 1 HVAC system)
+            </Text>
+            <Text style={styles.infoText}>
+              - Additional HVAC systems ($300 each)
+            </Text>
+            <Text style={styles.infoText}>
+              - Location-based zipcode charges ($0-$200)
+            </Text>
+            <Text style={styles.infoText}>
+              - 20% Partner Discount automatically applied
+            </Text>
+            <Text style={styles.infoText}>
+              - Clean & Seal: $2,500+ (sqft-based) or $2,000 per HVAC system
             </Text>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -552,34 +615,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  keyboardView: {
-    flex: 1,
-  },
   scrollContent: {
-    paddingTop: Platform.OS === 'android' ? 48 : 20,
+    paddingTop: Platform.OS === 'android' ? 20 : 0,
     paddingHorizontal: 24,
-    paddingBottom: 40,
-    justifyContent: 'center',
-    minHeight: '100%',
+    paddingBottom: 120,
   },
   header: {
     alignItems: 'center',
     marginBottom: 32,
     marginTop: 20,
   },
+  logo: {
+    width: 200,
+    height: 100,
+    marginBottom: 16,
+  },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: colors.text,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '400',
     color: colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: 20,
   },
   formContainer: {
     backgroundColor: colors.card,
@@ -607,7 +668,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
-  loginButton: {
+  helperText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+  calculateButton: {
     backgroundColor: colors.primary,
     borderRadius: 8,
     padding: 16,
@@ -617,12 +684,217 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  loginButtonDisabled: {
-    opacity: 0.6,
-  },
-  loginButtonText: {
+  calculateButtonText: {
     color: '#ffffff',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  quoteContainer: {
+    marginTop: 24,
+    padding: 20,
+    backgroundColor: colors.highlight,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  quoteLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  quoteAmount: {
+    fontSize: 42,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 20,
+  },
+  breakdownContainer: {
+    width: '100%',
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  breakdownTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  breakdownLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  breakdownLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  breakdownValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  breakdownDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 12,
+  },
+  breakdownSubtotalLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  breakdownSubtotalValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  breakdownDiscountLabel: {
+    fontSize: 13,
+    color: '#22c55e',
+    fontWeight: '600',
+    flex: 1,
+  },
+  breakdownDiscountValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#22c55e',
+  },
+  breakdownTotalLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  breakdownTotalValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  requestJobButton: {
+    backgroundColor: colors.secondary,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  requestJobButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cleanAndSealContainer: {
+    width: '100%',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: colors.accent,
+    alignItems: 'center',
+  },
+  cleanAndSealHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  cleanAndSealTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  priceRow: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cleanAndSealOriginalPrice: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
+  },
+  discountedPriceContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  discountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 8,
+  },
+  discountBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  cleanAndSealDiscountedPrice: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: colors.accent,
+  },
+  cleanAndSealDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  requestJobButtonSecondary: {
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.accent,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  requestJobButtonSecondaryText: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  quoteNote: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  resetButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    paddingHorizontal: 24,
+  },
+  resetButtonText: {
+    color: colors.text,
+    fontSize: 14,
     fontWeight: '600',
   },
   infoBox: {
@@ -634,12 +906,16 @@ const styles = StyleSheet.create({
     gap: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: 16,
+  },
+  infoTextContainer: {
+    flex: 1,
   },
   infoText: {
-    flex: 1,
     fontSize: 13,
     fontWeight: '400',
     color: colors.textSecondary,
-    lineHeight: 18,
+    lineHeight: 20,
+    marginBottom: 4,
   },
 });
