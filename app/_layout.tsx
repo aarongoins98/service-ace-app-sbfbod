@@ -1,7 +1,8 @@
+
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
-import { Stack, router } from "expo-router";
+import { Stack, router, useSegments, useRootNavigationState } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -15,6 +16,7 @@ import {
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -23,12 +25,41 @@ export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
 };
 
-export default function RootLayout() {
+function useProtectedRoute() {
+  const { isAuthenticated } = useAuth();
+  const segments = useSegments();
+  const navigationState = useRootNavigationState();
+
+  useEffect(() => {
+    if (!navigationState?.key) {
+      return;
+    }
+
+    const inAuthGroup = segments[0] === "(tabs)";
+    const onLoginScreen = segments[1] === "login";
+
+    console.log("Auth check - isAuthenticated:", isAuthenticated, "segments:", segments);
+
+    if (!isAuthenticated && inAuthGroup && !onLoginScreen) {
+      // User is not authenticated and trying to access protected routes
+      console.log("Redirecting to login - user not authenticated");
+      router.replace("/(tabs)/login");
+    } else if (isAuthenticated && onLoginScreen) {
+      // User is authenticated but on login screen, redirect to home
+      console.log("Redirecting to home - user already authenticated");
+      router.replace("/(tabs)/(home)/");
+    }
+  }, [isAuthenticated, segments, navigationState]);
+}
+
+function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const networkState = useNetworkState();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+
+  useProtectedRoute();
 
   useEffect(() => {
     if (loaded) {
@@ -119,5 +150,13 @@ export default function RootLayout() {
           </WidgetProvider>
         </ThemeProvider>
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
   );
 }

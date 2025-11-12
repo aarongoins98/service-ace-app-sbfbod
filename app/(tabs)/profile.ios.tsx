@@ -16,13 +16,15 @@ import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GlassView } from "expo-glass-effect";
 import { colors } from "@/styles/commonStyles";
-import { getUserData, saveUserData, clearUserData, TechnicianInfo } from "@/utils/userStorage";
+import { getUserData, saveUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const { logout, refreshUserData } = useAuth();
   
   const [userData, setUserData] = useState<TechnicianInfo | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -122,6 +124,7 @@ export default function ProfileScreen() {
       await saveUserData(updatedData);
       setUserData(updatedData);
       setIsEditing(false);
+      await refreshUserData();
       
       Alert.alert(
         "Success", 
@@ -159,7 +162,7 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     Alert.alert(
       "Logout",
-      "Are you sure you want to logout? This will clear your saved information.",
+      "Are you sure you want to logout? You will need to login again to access the app.",
       [
         {
           text: "Cancel",
@@ -171,8 +174,8 @@ export default function ProfileScreen() {
           onPress: async () => {
             try {
               console.log("Logging out user...");
-              await clearUserData();
-              console.log("User data cleared, redirecting to login");
+              await logout();
+              console.log("User logged out, redirecting to login");
               router.replace("/(tabs)/login");
             } catch (error) {
               console.error("Error logging out:", error);
