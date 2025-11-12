@@ -15,70 +15,147 @@ import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// Pricing Configuration
+// You can easily update these values to adjust pricing
+const PRICING_CONFIG = {
+  // Square footage ranges with their base prices
+  // Format: { maxSqFt: price }
+  // Ranges: 0-999, 1000-1999, 2000-2999, etc.
+  sqftRanges: [
+    { min: 0, max: 999, price: 400 },
+    { min: 1000, max: 1999, price: 450 },
+    { min: 2000, max: 2999, price: 500 },
+    { min: 3000, max: 3999, price: 550 },
+    { min: 4000, max: 4999, price: 600 },
+    { min: 5000, max: 5999, price: 650 },
+    { min: 6000, max: 6999, price: 700 },
+    { min: 7000, max: 7999, price: 750 },
+    { min: 8000, max: 8999, price: 800 },
+    { min: 9000, max: 9999, price: 850 },
+    { min: 10000, max: Infinity, price: 900 },
+  ],
+  
+  // HVAC system charge per unit
+  hvacSystemCharge: 300,
+  
+  // Zipcode charges
+  // Add or modify zipcodes and their associated charges here
+  zipcodeCharges: {
+    // Example zipcodes - replace with your actual zipcodes
+    // $0 charge zipcodes
+    '10001': 0,
+    '10002': 0,
+    '10003': 0,
+    
+    // $50 charge zipcodes
+    '20001': 50,
+    '20002': 50,
+    '20003': 50,
+    
+    // $100 charge zipcodes
+    '30001': 100,
+    '30002': 100,
+    '30003': 100,
+    
+    // $150 charge zipcodes
+    '40001': 150,
+    '40002': 150,
+    '40003': 150,
+    
+    // $200 charge zipcodes
+    '50001': 200,
+    '50002': 200,
+    '50003': 200,
+  } as { [key: string]: number },
+};
+
 export default function PricingToolScreen() {
   const theme = useTheme();
   
-  const [serviceType, setServiceType] = useState("");
   const [squareFootage, setSquareFootage] = useState("");
-  const [complexity, setComplexity] = useState("");
-  const [urgency, setUrgency] = useState("");
+  const [hvacSystems, setHvacSystems] = useState("");
+  const [zipcode, setZipcode] = useState("");
   const [quote, setQuote] = useState<number | null>(null);
+  const [breakdown, setBreakdown] = useState<{
+    sqftCharge: number;
+    hvacCharge: number;
+    zipcodeCharge: number;
+    total: number;
+  } | null>(null);
+
+  const getSqftCharge = (sqft: number): number => {
+    const range = PRICING_CONFIG.sqftRanges.find(
+      r => sqft >= r.min && sqft <= r.max
+    );
+    return range ? range.price : PRICING_CONFIG.sqftRanges[PRICING_CONFIG.sqftRanges.length - 1].price;
+  };
+
+  const getZipcodeCharge = (zip: string): number => {
+    // Remove any spaces or dashes from zipcode
+    const cleanZip = zip.replace(/[\s-]/g, '');
+    return PRICING_CONFIG.zipcodeCharges[cleanZip] ?? 0;
+  };
 
   const calculateQuote = () => {
     // Validate inputs
-    if (!serviceType || !squareFootage || !complexity || !urgency) {
+    if (!squareFootage || !hvacSystems || !zipcode) {
       Alert.alert("Missing Information", "Please fill in all fields to generate a quote.");
       return;
     }
 
     const sqFt = parseFloat(squareFootage);
-    if (isNaN(sqFt) || sqFt <= 0) {
-      Alert.alert("Invalid Input", "Please enter a valid square footage.");
+    if (isNaN(sqFt) || sqFt < 0) {
+      Alert.alert("Invalid Input", "Please enter a valid square footage (0 or greater).");
       return;
     }
 
-    // Base rate per square foot
-    let baseRate = 2.5;
+    const hvacCount = parseInt(hvacSystems);
+    if (isNaN(hvacCount) || hvacCount < 0) {
+      Alert.alert("Invalid Input", "Please enter a valid number of HVAC systems (0 or greater).");
+      return;
+    }
 
-    // Service type multiplier
-    const serviceMultipliers: { [key: string]: number } = {
-      'plumbing': 1.2,
-      'electrical': 1.3,
-      'hvac': 1.4,
-      'general': 1.0,
-    };
-    const serviceKey = serviceType.toLowerCase();
-    const serviceMultiplier = serviceMultipliers[serviceKey] || 1.0;
+    // Calculate each component
+    const sqftCharge = getSqftCharge(sqFt);
+    const hvacCharge = hvacCount * PRICING_CONFIG.hvacSystemCharge;
+    const zipcodeCharge = getZipcodeCharge(zipcode);
+    const total = sqftCharge + hvacCharge + zipcodeCharge;
 
-    // Complexity multiplier
-    const complexityMultipliers: { [key: string]: number } = {
-      'simple': 1.0,
-      'moderate': 1.3,
-      'complex': 1.6,
-    };
-    const complexityKey = complexity.toLowerCase();
-    const complexityMultiplier = complexityMultipliers[complexityKey] || 1.0;
+    // Set the breakdown and total
+    setBreakdown({
+      sqftCharge,
+      hvacCharge,
+      zipcodeCharge,
+      total,
+    });
+    setQuote(total);
 
-    // Urgency multiplier
-    const urgencyMultipliers: { [key: string]: number } = {
-      'standard': 1.0,
-      'priority': 1.25,
-      'emergency': 1.5,
-    };
-    const urgencyKey = urgency.toLowerCase();
-    const urgencyMultiplier = urgencyMultipliers[urgencyKey] || 1.0;
-
-    // Calculate final quote
-    const calculatedQuote = sqFt * baseRate * serviceMultiplier * complexityMultiplier * urgencyMultiplier;
-    setQuote(Math.round(calculatedQuote * 100) / 100);
+    console.log('Quote calculated:', {
+      squareFootage: sqFt,
+      hvacSystems: hvacCount,
+      zipcode,
+      sqftCharge,
+      hvacCharge,
+      zipcodeCharge,
+      total,
+    });
   };
 
   const resetForm = () => {
-    setServiceType("");
     setSquareFootage("");
-    setComplexity("");
-    setUrgency("");
+    setHvacSystems("");
+    setZipcode("");
     setQuote(null);
+    setBreakdown(null);
+  };
+
+  const getSqftRangeText = (sqft: number): string => {
+    const range = PRICING_CONFIG.sqftRanges.find(
+      r => sqft >= r.min && sqft <= r.max
+    );
+    if (!range) return "Unknown range";
+    if (range.max === Infinity) return `${range.min}+ sqft`;
+    return `${range.min}-${range.max} sqft`;
   };
 
   return (
@@ -100,48 +177,49 @@ export default function PricingToolScreen() {
 
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Service Type</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Plumbing, Electrical, HVAC, General"
-              placeholderTextColor={colors.textSecondary}
-              value={serviceType}
-              onChangeText={setServiceType}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
             <Text style={styles.label}>Square Footage</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter area in square feet"
+              placeholder="Enter home square footage (e.g., 1500)"
               placeholderTextColor={colors.textSecondary}
               value={squareFootage}
               onChangeText={setSquareFootage}
               keyboardType="numeric"
             />
+            <Text style={styles.helperText}>
+              Ranges start at 0-999 sqft
+            </Text>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Complexity Level</Text>
+            <Text style={styles.label}>Number of HVAC Systems</Text>
             <TextInput
               style={styles.input}
-              placeholder="Simple, Moderate, or Complex"
+              placeholder="Enter number of HVAC systems (e.g., 2)"
               placeholderTextColor={colors.textSecondary}
-              value={complexity}
-              onChangeText={setComplexity}
+              value={hvacSystems}
+              onChangeText={setHvacSystems}
+              keyboardType="numeric"
             />
+            <Text style={styles.helperText}>
+              ${PRICING_CONFIG.hvacSystemCharge} per HVAC system
+            </Text>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Urgency</Text>
+            <Text style={styles.label}>Zipcode</Text>
             <TextInput
               style={styles.input}
-              placeholder="Standard, Priority, or Emergency"
+              placeholder="Enter zipcode (e.g., 10001)"
               placeholderTextColor={colors.textSecondary}
-              value={urgency}
-              onChangeText={setUrgency}
+              value={zipcode}
+              onChangeText={setZipcode}
+              keyboardType="numeric"
+              maxLength={5}
             />
+            <Text style={styles.helperText}>
+              Location-based charges may apply
+            </Text>
           </View>
 
           <TouchableOpacity 
@@ -149,16 +227,80 @@ export default function PricingToolScreen() {
             onPress={calculateQuote}
             activeOpacity={0.8}
           >
+            <IconSymbol 
+              ios_icon_name="calculator.fill" 
+              android_material_icon_name="calculate" 
+              size={20} 
+              color="#ffffff" 
+            />
             <Text style={styles.calculateButtonText}>Calculate Quote</Text>
           </TouchableOpacity>
 
-          {quote !== null && (
+          {quote !== null && breakdown && (
             <View style={styles.quoteContainer}>
               <Text style={styles.quoteLabel}>Estimated Quote</Text>
               <Text style={styles.quoteAmount}>${quote.toFixed(2)}</Text>
+              
+              <View style={styles.breakdownContainer}>
+                <Text style={styles.breakdownTitle}>Price Breakdown</Text>
+                
+                <View style={styles.breakdownRow}>
+                  <View style={styles.breakdownLeft}>
+                    <IconSymbol 
+                      ios_icon_name="house.fill" 
+                      android_material_icon_name="home" 
+                      size={16} 
+                      color={colors.textSecondary} 
+                    />
+                    <Text style={styles.breakdownLabel}>
+                      Square Footage ({getSqftRangeText(parseFloat(squareFootage))})
+                    </Text>
+                  </View>
+                  <Text style={styles.breakdownValue}>${breakdown.sqftCharge.toFixed(2)}</Text>
+                </View>
+
+                <View style={styles.breakdownRow}>
+                  <View style={styles.breakdownLeft}>
+                    <IconSymbol 
+                      ios_icon_name="fan.fill" 
+                      android_material_icon_name="ac_unit" 
+                      size={16} 
+                      color={colors.textSecondary} 
+                    />
+                    <Text style={styles.breakdownLabel}>
+                      HVAC Systems ({hvacSystems} × ${PRICING_CONFIG.hvacSystemCharge})
+                    </Text>
+                  </View>
+                  <Text style={styles.breakdownValue}>${breakdown.hvacCharge.toFixed(2)}</Text>
+                </View>
+
+                <View style={styles.breakdownRow}>
+                  <View style={styles.breakdownLeft}>
+                    <IconSymbol 
+                      ios_icon_name="location.fill" 
+                      android_material_icon_name="location_on" 
+                      size={16} 
+                      color={colors.textSecondary} 
+                    />
+                    <Text style={styles.breakdownLabel}>
+                      Location Charge (Zipcode: {zipcode})
+                    </Text>
+                  </View>
+                  <Text style={styles.breakdownValue}>${breakdown.zipcodeCharge.toFixed(2)}</Text>
+                </View>
+
+                <View style={styles.breakdownDivider} />
+
+                <View style={styles.breakdownRow}>
+                  <Text style={styles.breakdownTotalLabel}>Total</Text>
+                  <Text style={styles.breakdownTotalValue}>${breakdown.total.toFixed(2)}</Text>
+                </View>
+              </View>
+
               <Text style={styles.quoteNote}>
                 This is an estimated quote based on the provided information
               </Text>
+              
               <TouchableOpacity 
                 style={styles.resetButton} 
                 onPress={resetForm}
@@ -177,8 +319,25 @@ export default function PricingToolScreen() {
             size={20} 
             color={colors.primary} 
           />
-          <Text style={styles.infoText}>
-            Quotes are calculated based on service type, area, complexity, and urgency
+          <View style={styles.infoTextContainer}>
+            <Text style={styles.infoText}>
+              Pricing is calculated based on:
+            </Text>
+            <Text style={styles.infoText}>
+              - Square footage range (starting at $400)
+            </Text>
+            <Text style={styles.infoText}>
+              - Number of HVAC systems ($300 each)
+            </Text>
+            <Text style={styles.infoText}>
+              - Location-based zipcode charges
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.configNote}>
+          <Text style={styles.configNoteText}>
+            Note: To update zipcode charges or square footage pricing, modify the PRICING_CONFIG at the top of the pricingTool.tsx file.
           </Text>
         </View>
       </ScrollView>
@@ -238,12 +397,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
+  helperText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
   calculateButton: {
     backgroundColor: colors.primary,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
   },
   calculateButtonText: {
     color: '#ffffff',
@@ -267,7 +435,57 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontWeight: '700',
     color: colors.primary,
+    marginBottom: 20,
+  },
+  breakdownContainer: {
+    width: '100%',
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  breakdownTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
     marginBottom: 12,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  breakdownLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  breakdownLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  breakdownValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  breakdownDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 12,
+  },
+  breakdownTotalLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  breakdownTotalValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.primary,
   },
   quoteNote: {
     fontSize: 12,
@@ -291,18 +509,36 @@ const styles = StyleSheet.create({
   },
   infoBox: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     gap: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: 16,
+  },
+  infoTextContainer: {
+    flex: 1,
   },
   infoText: {
-    flex: 1,
     fontSize: 13,
     fontWeight: '400',
+    color: colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  configNote: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.accent,
+  },
+  configNoteText: {
+    fontSize: 12,
     color: colors.textSecondary,
     lineHeight: 18,
   },
