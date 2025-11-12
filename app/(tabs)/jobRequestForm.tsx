@@ -58,6 +58,7 @@ export default function JobRequestFormScreen() {
     setIsLoadingTechnician(true);
     try {
       const data = await getUserData();
+      console.log("Loaded technician info:", data);
       setTechnicianInfo(data);
       if (!data) {
         Alert.alert(
@@ -89,7 +90,11 @@ export default function JobRequestFormScreen() {
   };
 
   const handleSubmit = async () => {
+    console.log("=== JOB REQUEST SUBMISSION STARTED ===");
+    console.log("Timestamp:", new Date().toISOString());
+    
     if (!technicianInfo) {
+      console.log("ERROR: No technician info available");
       Alert.alert(
         "Login Required",
         "Please login first to submit job requests.",
@@ -103,34 +108,55 @@ export default function JobRequestFormScreen() {
       return;
     }
 
+    console.log("Technician Info:", JSON.stringify(technicianInfo, null, 2));
+
     // Validate all required inputs
     if (!squareFootage || !hvacSystems || !customerFirstName || !customerLastName || 
         !phone || !email || !streetAddress || !city || !state || !zipcode) {
+      console.log("ERROR: Missing required fields");
+      console.log("Field values:", {
+        squareFootage,
+        hvacSystems,
+        customerFirstName,
+        customerLastName,
+        phone,
+        email,
+        streetAddress,
+        city,
+        state,
+        zipcode
+      });
       Alert.alert("Missing Information", "Please fill in all required fields.");
       return;
     }
 
     const sqFt = parseFloat(squareFootage);
     if (isNaN(sqFt) || sqFt < 0) {
+      console.log("ERROR: Invalid square footage:", squareFootage);
       Alert.alert("Invalid Input", "Please enter a valid square footage (0 or greater).");
       return;
     }
 
     const hvacCount = parseInt(hvacSystems);
     if (isNaN(hvacCount) || hvacCount < 0) {
+      console.log("ERROR: Invalid HVAC count:", hvacSystems);
       Alert.alert("Invalid Input", "Please enter a valid number of additional HVAC systems (0 or greater).");
       return;
     }
 
     if (!validateEmail(email)) {
+      console.log("ERROR: Invalid email:", email);
       Alert.alert("Invalid Email", "Please enter a valid email address.");
       return;
     }
 
     if (!validatePhone(phone)) {
+      console.log("ERROR: Invalid phone:", phone);
       Alert.alert("Invalid Phone", "Please enter a valid phone number (at least 10 digits).");
       return;
     }
+
+    console.log("All validations passed");
 
     // Prepare comprehensive data for Zapier webhook
     const jobData = {
@@ -184,11 +210,16 @@ export default function JobRequestFormScreen() {
       },
     };
 
-    console.log("Complete Job Request Data being sent to Zapier:", JSON.stringify(jobData, null, 2));
+    console.log("=== COMPLETE JOB REQUEST DATA ===");
+    console.log(JSON.stringify(jobData, null, 2));
+    console.log("=== END JOB REQUEST DATA ===");
 
     // Send to Zapier webhook
     setIsSubmitting(true);
+    console.log("Sending to Zapier webhook:", ZAPIER_WEBHOOK_URL);
+    
     try {
+      console.log("Making fetch request...");
       const response = await fetch(ZAPIER_WEBHOOK_URL, {
         method: 'POST',
         headers: {
@@ -197,8 +228,22 @@ export default function JobRequestFormScreen() {
         body: JSON.stringify(jobData),
       });
       
+      console.log("Response received:");
+      console.log("Status:", response.status);
+      console.log("Status Text:", response.statusText);
+      console.log("OK:", response.ok);
+      
+      // Try to read response body
+      let responseText = "";
+      try {
+        responseText = await response.text();
+        console.log("Response Body:", responseText);
+      } catch (textError) {
+        console.log("Could not read response text:", textError);
+      }
+      
       if (response.ok) {
-        console.log('Successfully sent to Zapier');
+        console.log('✅ Successfully sent to Zapier');
         setIsSubmitted(true);
         Alert.alert(
           "Success!", 
@@ -207,32 +252,40 @@ export default function JobRequestFormScreen() {
             {
               text: "OK",
               onPress: () => {
-                console.log("Job request submitted successfully");
+                console.log("Job request submitted successfully - User acknowledged");
               }
             }
           ]
         );
       } else {
-        console.error('Zapier webhook returned error:', response.status);
+        console.error('❌ Zapier webhook returned error');
+        console.error('Status:', response.status);
+        console.error('Response:', responseText);
         Alert.alert(
           "Submission Error",
-          "There was an issue submitting the job request. Please try again.",
+          `There was an issue submitting the job request (Status: ${response.status}). Please try again or contact support.`,
           [{ text: "OK" }]
         );
       }
     } catch (error) {
-      console.error('Error sending to Zapier:', error);
+      console.error('❌ Error sending to Zapier:');
+      console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
+      console.error('Full error:', error);
+      
       Alert.alert(
         "Network Error",
-        "Unable to submit job request. Please check your internet connection and try again.",
+        `Unable to submit job request. Error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your internet connection and try again.`,
         [{ text: "OK" }]
       );
     } finally {
       setIsSubmitting(false);
+      console.log("=== JOB REQUEST SUBMISSION ENDED ===");
     }
   };
 
   const resetForm = () => {
+    console.log("Resetting form");
     setSquareFootage("");
     setHvacSystems("");
     setCustomerFirstName("");
@@ -545,6 +598,19 @@ export default function JobRequestFormScreen() {
             Your technician information will be automatically included with this job request. The data will be sent to Housecall Pro via Zapier and an email notification will be sent to agoins@refreshductcleaning.com.
           </Text>
         </View>
+
+        <View style={styles.debugBox}>
+          <Text style={styles.debugTitle}>🔍 Debugging Information</Text>
+          <Text style={styles.debugText}>
+            Webhook URL: {ZAPIER_WEBHOOK_URL}
+          </Text>
+          <Text style={styles.debugText}>
+            Check your console logs for detailed submission data.
+          </Text>
+          <Text style={styles.debugText}>
+            All form data and API responses are logged.
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -741,12 +807,33 @@ const styles = StyleSheet.create({
     gap: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: 16,
   },
   infoText: {
     flex: 1,
     fontSize: 13,
     fontWeight: '400',
     color: colors.textSecondary,
+    lineHeight: 18,
+  },
+  debugBox: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#0ea5e9',
+    marginBottom: 20,
+  },
+  debugTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0c4a6e',
+    marginBottom: 8,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#0c4a6e',
+    marginBottom: 4,
     lineHeight: 18,
   },
 });
