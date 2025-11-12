@@ -19,12 +19,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
 
+const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25340159/u8hczk6/";
+
 export default function JobRequestFormScreen() {
   const theme = useTheme();
   const router = useRouter();
   
   const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
   const [isLoadingTechnician, setIsLoadingTechnician] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Same fields as Pricing Tool
   const [squareFootage, setSquareFootage] = useState("");
@@ -149,37 +152,50 @@ export default function JobRequestFormScreen() {
 
     console.log("Job Request Data with Technician Info:", jobData);
 
-    // Here you would integrate with Zapier webhook
-    // Example: 
-    // try {
-    //   const response = await fetch('YOUR_ZAPIER_WEBHOOK_URL', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(jobData),
-    //   });
-    //   if (response.ok) {
-    //     console.log('Successfully sent to Zapier');
-    //   }
-    // } catch (error) {
-    //   console.error('Error sending to Zapier:', error);
-    // }
-    
-    // For now, show success message
-    setIsSubmitted(true);
-    Alert.alert(
-      "Success!", 
-      `Job request submitted by ${technicianInfo.firstName} ${technicianInfo.lastName} from ${technicianInfo.companyName}. Refresh Duct Cleaning will reach out to the customer to schedule at our soonest availability.`,
-      [
-        {
-          text: "OK",
-          onPress: () => {
-            console.log("Job request submitted");
-          }
-        }
-      ]
-    );
+    // Send to Zapier webhook
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(ZAPIER_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(jobData),
+      });
+      
+      if (response.ok) {
+        console.log('Successfully sent to Zapier');
+        setIsSubmitted(true);
+        Alert.alert(
+          "Success!", 
+          `Job request submitted by ${technicianInfo.firstName} ${technicianInfo.lastName} from ${technicianInfo.companyName}. Refresh Duct Cleaning will reach out to the customer to schedule at our soonest availability.`,
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                console.log("Job request submitted successfully");
+              }
+            }
+          ]
+        );
+      } else {
+        console.error('Zapier webhook returned error:', response.status);
+        Alert.alert(
+          "Submission Error",
+          "There was an issue submitting the job request. Please try again.",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      console.error('Error sending to Zapier:', error);
+      Alert.alert(
+        "Network Error",
+        "Unable to submit job request. Please check your internet connection and try again.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -270,6 +286,7 @@ export default function JobRequestFormScreen() {
               value={squareFootage}
               onChangeText={setSquareFootage}
               keyboardType="numeric"
+              editable={!isSubmitting}
             />
             <Text style={styles.helperText}>
               This square footage includes 1 HVAC system in the price
@@ -285,6 +302,7 @@ export default function JobRequestFormScreen() {
               value={hvacSystems}
               onChangeText={setHvacSystems}
               keyboardType="numeric"
+              editable={!isSubmitting}
             />
             <Text style={styles.helperText}>
               Enter 0 if only 1 HVAC system
@@ -301,6 +319,7 @@ export default function JobRequestFormScreen() {
               onChangeText={setZipcode}
               keyboardType="numeric"
               maxLength={5}
+              editable={!isSubmitting}
             />
             <Text style={styles.helperText}>
               Location-based charges may apply
@@ -319,6 +338,7 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={customerName}
               onChangeText={setCustomerName}
+              editable={!isSubmitting}
             />
           </View>
 
@@ -331,6 +351,7 @@ export default function JobRequestFormScreen() {
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
+              editable={!isSubmitting}
             />
           </View>
 
@@ -344,6 +365,7 @@ export default function JobRequestFormScreen() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!isSubmitting}
             />
           </View>
 
@@ -356,6 +378,7 @@ export default function JobRequestFormScreen() {
               value={address}
               onChangeText={setAddress}
               multiline
+              editable={!isSubmitting}
             />
           </View>
 
@@ -373,6 +396,7 @@ export default function JobRequestFormScreen() {
               onChangeText={setJobDescription}
               multiline
               numberOfLines={4}
+              editable={!isSubmitting}
             />
           </View>
 
@@ -384,22 +408,33 @@ export default function JobRequestFormScreen() {
               placeholderTextColor={colors.textSecondary}
               value={preferredDate}
               onChangeText={setPreferredDate}
+              editable={!isSubmitting}
             />
           </View>
 
           {!isSubmitted ? (
             <TouchableOpacity 
-              style={styles.submitButton} 
+              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]} 
               onPress={handleSubmit}
               activeOpacity={0.8}
+              disabled={isSubmitting}
             >
-              <IconSymbol 
-                ios_icon_name="paperplane.fill" 
-                android_material_icon_name="send" 
-                size={20} 
-                color="#ffffff" 
-              />
-              <Text style={styles.submitButtonText}>Submit Job Request</Text>
+              {isSubmitting ? (
+                <>
+                  <ActivityIndicator size="small" color="#ffffff" />
+                  <Text style={styles.submitButtonText}>Submitting...</Text>
+                </>
+              ) : (
+                <>
+                  <IconSymbol 
+                    ios_icon_name="paperplane.fill" 
+                    android_material_icon_name="send" 
+                    size={20} 
+                    color="#ffffff" 
+                  />
+                  <Text style={styles.submitButtonText}>Submit Job Request</Text>
+                </>
+              )}
             </TouchableOpacity>
           ) : (
             <View style={styles.successContainer}>
@@ -432,7 +467,7 @@ export default function JobRequestFormScreen() {
             color={colors.accent} 
           />
           <Text style={styles.infoText}>
-            Your technician information will be automatically included with this job request. To integrate with your CRM via Zapier, you&apos;ll need to set up a webhook URL in the code and create a Zap that receives this data.
+            Your technician information will be automatically included with this job request and sent to your CRM via Zapier.
           </Text>
         </View>
       </ScrollView>
@@ -583,6 +618,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
   submitButtonText: {
     color: '#ffffff',
