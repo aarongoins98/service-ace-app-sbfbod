@@ -14,7 +14,6 @@ import {
 import { useTheme } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { GlassView } from "expo-glass-effect";
 import { colors } from "@/styles/commonStyles";
 import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 import { IconSymbol } from "@/components/IconSymbol";
@@ -53,12 +52,14 @@ export default function ProfileScreen() {
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
 
   useEffect(() => {
+    console.log("ProfileScreen (iOS): Component mounted");
     loadUserData();
     loadCompanies();
   }, []);
 
   const loadCompanies = async () => {
     try {
+      console.log("ProfileScreen (iOS): Loading companies...");
       setIsLoadingCompanies(true);
       const { data, error } = await supabase
         .from('companies')
@@ -66,13 +67,14 @@ export default function ProfileScreen() {
         .order('name', { ascending: true });
 
       if (error) {
-        console.error("Error loading companies:", error);
+        console.error("ProfileScreen (iOS): Error loading companies:", error);
         return;
       }
 
+      console.log("ProfileScreen (iOS): Loaded companies:", data?.length || 0);
       setCompanies(data || []);
     } catch (error) {
-      console.error("Error loading companies:", error);
+      console.error("ProfileScreen (iOS): Error loading companies:", error);
     } finally {
       setIsLoadingCompanies(false);
     }
@@ -80,8 +82,11 @@ export default function ProfileScreen() {
 
   const loadUserData = async () => {
     try {
+      console.log("ProfileScreen (iOS): Loading user data...");
       setIsLoading(true);
       const data = await getUserData();
+      console.log("ProfileScreen (iOS): User data loaded:", data ? "Found" : "Not found");
+      
       if (data) {
         setTechnicianInfo(data);
         setFirstName(data.firstName);
@@ -92,7 +97,7 @@ export default function ProfileScreen() {
         setSelectedCompanyId(data.companyId || "");
       }
     } catch (error) {
-      console.error("Error loading user data:", error);
+      console.error("ProfileScreen (iOS): Error loading user data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -154,6 +159,8 @@ export default function ProfileScreen() {
   };
 
   const handleSave = async () => {
+    console.log("ProfileScreen (iOS): Saving profile...");
+    
     // Validation
     if (!firstName.trim()) {
       Alert.alert("Missing Information", "Please enter your first name.");
@@ -207,9 +214,10 @@ export default function ProfileScreen() {
       setTechnicianInfo(userData);
       setIsEditing(false);
       
+      console.log("ProfileScreen (iOS): Profile saved successfully");
       Alert.alert("Success", "Your profile has been updated!");
     } catch (error) {
-      console.error("Error saving user data:", error);
+      console.error("ProfileScreen (iOS): Error saving user data:", error);
       Alert.alert("Error", "Failed to save your profile. Please try again.");
     } finally {
       setIsSaving(false);
@@ -217,6 +225,7 @@ export default function ProfileScreen() {
   };
 
   const handleCancel = () => {
+    console.log("ProfileScreen (iOS): Canceling edit");
     if (technicianInfo) {
       setFirstName(technicianInfo.firstName);
       setLastName(technicianInfo.lastName);
@@ -231,6 +240,7 @@ export default function ProfileScreen() {
   };
 
   const handleStartEditing = () => {
+    console.log("ProfileScreen (iOS): Starting edit mode");
     setIsEditing(true);
   };
 
@@ -245,6 +255,7 @@ export default function ProfileScreen() {
           style: "destructive",
           onPress: async () => {
             try {
+              console.log("ProfileScreen (iOS): Logging out...");
               await clearUserData();
               setTechnicianInfo(null);
               setFirstName("");
@@ -255,7 +266,7 @@ export default function ProfileScreen() {
               setSelectedCompanyId("");
               router.replace("/(tabs)/login");
             } catch (error) {
-              console.error("Error during logout:", error);
+              console.error("ProfileScreen (iOS): Error during logout:", error);
               Alert.alert("Error", "Failed to logout. Please try again.");
             }
           },
@@ -263,6 +274,8 @@ export default function ProfileScreen() {
       ]
     );
   };
+
+  console.log("ProfileScreen (iOS): Rendering - isLoading:", isLoading, "technicianInfo:", technicianInfo ? "exists" : "null");
 
   if (isLoading) {
     return (
@@ -344,7 +357,7 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          <GlassView style={styles.card} tint="light">
+          <View style={styles.card}>
             <View style={styles.formGroup}>
               <Text style={styles.label}>First Name</Text>
               {isEditing ? (
@@ -443,7 +456,7 @@ export default function ProfileScreen() {
                 <Text style={styles.value}>{technicianInfo.companyName}</Text>
               )}
             </View>
-          </GlassView>
+          </View>
 
           {isEditing && (
             <View style={styles.actionButtons}>
@@ -540,7 +553,7 @@ export default function ProfileScreen() {
               </View>
             ) : (
               <ScrollView style={styles.modalScroll}>
-                {companies.map((company) => (
+                {companies.map((company, index) => (
                   <TouchableOpacity
                     key={company.id}
                     style={[
@@ -670,10 +683,12 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   card: {
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
     gap: 20,
-    overflow: 'hidden',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
   },
   formGroup: {
     gap: 8,

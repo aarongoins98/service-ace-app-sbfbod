@@ -53,12 +53,14 @@ export default function ProfileScreen() {
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
 
   useEffect(() => {
+    console.log("ProfileScreen: Component mounted");
     loadUserData();
     loadCompanies();
   }, []);
 
   const loadCompanies = async () => {
     try {
+      console.log("ProfileScreen: Loading companies...");
       setIsLoadingCompanies(true);
       const { data, error } = await supabase
         .from('companies')
@@ -66,13 +68,14 @@ export default function ProfileScreen() {
         .order('name', { ascending: true });
 
       if (error) {
-        console.error("Error loading companies:", error);
+        console.error("ProfileScreen: Error loading companies:", error);
         return;
       }
 
+      console.log("ProfileScreen: Loaded companies:", data?.length || 0);
       setCompanies(data || []);
     } catch (error) {
-      console.error("Error loading companies:", error);
+      console.error("ProfileScreen: Error loading companies:", error);
     } finally {
       setIsLoadingCompanies(false);
     }
@@ -80,8 +83,11 @@ export default function ProfileScreen() {
 
   const loadUserData = async () => {
     try {
+      console.log("ProfileScreen: Loading user data...");
       setIsLoading(true);
       const data = await getUserData();
+      console.log("ProfileScreen: User data loaded:", data ? "Found" : "Not found");
+      
       if (data) {
         setTechnicianInfo(data);
         setFirstName(data.firstName);
@@ -92,7 +98,7 @@ export default function ProfileScreen() {
         setSelectedCompanyId(data.companyId || "");
       }
     } catch (error) {
-      console.error("Error loading user data:", error);
+      console.error("ProfileScreen: Error loading user data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -154,6 +160,8 @@ export default function ProfileScreen() {
   };
 
   const handleSave = async () => {
+    console.log("ProfileScreen: Saving profile...");
+    
     // Validation
     if (!firstName.trim()) {
       Alert.alert("Missing Information", "Please enter your first name.");
@@ -207,9 +215,10 @@ export default function ProfileScreen() {
       setTechnicianInfo(userData);
       setIsEditing(false);
       
+      console.log("ProfileScreen: Profile saved successfully");
       Alert.alert("Success", "Your profile has been updated!");
     } catch (error) {
-      console.error("Error saving user data:", error);
+      console.error("ProfileScreen: Error saving user data:", error);
       Alert.alert("Error", "Failed to save your profile. Please try again.");
     } finally {
       setIsSaving(false);
@@ -217,6 +226,7 @@ export default function ProfileScreen() {
   };
 
   const handleCancel = () => {
+    console.log("ProfileScreen: Canceling edit");
     if (technicianInfo) {
       setFirstName(technicianInfo.firstName);
       setLastName(technicianInfo.lastName);
@@ -231,6 +241,7 @@ export default function ProfileScreen() {
   };
 
   const handleStartEditing = () => {
+    console.log("ProfileScreen: Starting edit mode");
     setIsEditing(true);
   };
 
@@ -245,6 +256,7 @@ export default function ProfileScreen() {
           style: "destructive",
           onPress: async () => {
             try {
+              console.log("ProfileScreen: Logging out...");
               await clearUserData();
               setTechnicianInfo(null);
               setFirstName("");
@@ -255,7 +267,7 @@ export default function ProfileScreen() {
               setSelectedCompanyId("");
               router.replace("/(tabs)/login");
             } catch (error) {
-              console.error("Error during logout:", error);
+              console.error("ProfileScreen: Error during logout:", error);
               Alert.alert("Error", "Failed to logout. Please try again.");
             }
           },
@@ -263,6 +275,8 @@ export default function ProfileScreen() {
       ]
     );
   };
+
+  console.log("ProfileScreen: Rendering - isLoading:", isLoading, "technicianInfo:", technicianInfo ? "exists" : "null");
 
   if (isLoading) {
     return (
@@ -540,7 +554,7 @@ export default function ProfileScreen() {
               </View>
             ) : (
               <ScrollView style={styles.modalScroll}>
-                {companies.map((company) => (
+                {companies.map((company, index) => (
                   <TouchableOpacity
                     key={company.id}
                     style={[
