@@ -29,17 +29,22 @@ export default function JobRequestFormScreen() {
   const [isLoadingTechnician, setIsLoadingTechnician] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Same fields as Pricing Tool
+  // Same fields as Pricing Tool (removed zipcode from here)
   const [squareFootage, setSquareFootage] = useState("");
   const [hvacSystems, setHvacSystems] = useState("");
-  const [zipcode, setZipcode] = useState("");
   
   // Customer information
   const [customerFirstName, setCustomerFirstName] = useState("");
   const [customerLastName, setCustomerLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
+  
+  // Broken out address fields
+  const [streetAddress, setStreetAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zipcode, setZipcode] = useState("");
+  
   const [jobDescription, setJobDescription] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -97,8 +102,9 @@ export default function JobRequestFormScreen() {
       return;
     }
 
-    // Validate all required inputs (same as Pricing Tool)
-    if (!squareFootage || !hvacSystems || !zipcode || !customerFirstName || !customerLastName || !phone || !email || !address) {
+    // Validate all required inputs
+    if (!squareFootage || !hvacSystems || !customerFirstName || !customerLastName || 
+        !phone || !email || !streetAddress || !city || !state || !zipcode) {
       Alert.alert("Missing Information", "Please fill in all required fields.");
       return;
     }
@@ -135,21 +141,25 @@ export default function JobRequestFormScreen() {
         phoneNumber: technicianInfo.phoneNumber,
         email: technicianInfo.email,
       },
-      // Customer Information
+      // Customer Information with broken out address
       customer: {
         firstName: customerFirstName,
         lastName: customerLastName,
         phone,
         email,
-        address,
+        streetAddress,
+        city,
+        state,
+        zipcode,
       },
-      // Job Details (same as Pricing Tool)
+      // Job Details
       squareFootage: sqFt,
       additionalHvacSystems: hvacCount,
-      zipcode,
       jobDescription: jobDescription || "Duct cleaning service requested",
       preferredDate: preferredDate || "Not specified",
       submittedAt: new Date().toISOString(),
+      // Email notification recipient
+      notificationEmail: "agoins@refreshductcleaning.com",
     };
 
     console.log("Job Request Data with Technician Info:", jobData);
@@ -170,7 +180,7 @@ export default function JobRequestFormScreen() {
         setIsSubmitted(true);
         Alert.alert(
           "Success!", 
-          `Job request submitted by ${technicianInfo.firstName} ${technicianInfo.lastName} from ${technicianInfo.companyName}. Refresh Duct Cleaning will reach out to the customer to schedule at our soonest availability.`,
+          `Job request submitted by ${technicianInfo.firstName} ${technicianInfo.lastName} from ${technicianInfo.companyName}. The information has been sent to Housecall Pro and an email notification has been sent to agoins@refreshductcleaning.com.`,
           [
             {
               text: "OK",
@@ -203,12 +213,14 @@ export default function JobRequestFormScreen() {
   const resetForm = () => {
     setSquareFootage("");
     setHvacSystems("");
-    setZipcode("");
     setCustomerFirstName("");
     setCustomerLastName("");
     setPhone("");
     setEmail("");
-    setAddress("");
+    setStreetAddress("");
+    setCity("");
+    setState("");
+    setZipcode("");
     setJobDescription("");
     setPreferredDate("");
     setIsSubmitted(false);
@@ -312,23 +324,6 @@ export default function JobRequestFormScreen() {
             </Text>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Zipcode *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter zipcode (e.g., 84003)"
-              placeholderTextColor={colors.textSecondary}
-              value={zipcode}
-              onChangeText={setZipcode}
-              keyboardType="numeric"
-              maxLength={5}
-              editable={!isSubmitting}
-            />
-            <Text style={styles.helperText}>
-              Location-based charges may apply
-            </Text>
-          </View>
-
           <View style={styles.divider} />
 
           <Text style={styles.sectionTitle}>Customer Information</Text>
@@ -384,15 +379,58 @@ export default function JobRequestFormScreen() {
             />
           </View>
 
+          <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>Service Address</Text>
+
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Service Address *</Text>
+            <Text style={styles.label}>Street Address *</Text>
             <TextInput
               style={styles.input}
-              placeholder="123 Main St, City, State, ZIP"
+              placeholder="123 Main Street"
               placeholderTextColor={colors.textSecondary}
-              value={address}
-              onChangeText={setAddress}
-              multiline
+              value={streetAddress}
+              onChangeText={setStreetAddress}
+              editable={!isSubmitting}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>City *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter city"
+              placeholderTextColor={colors.textSecondary}
+              value={city}
+              onChangeText={setCity}
+              editable={!isSubmitting}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>State *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter state (e.g., UT)"
+              placeholderTextColor={colors.textSecondary}
+              value={state}
+              onChangeText={setState}
+              autoCapitalize="characters"
+              maxLength={2}
+              editable={!isSubmitting}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Zipcode *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter zipcode (e.g., 84003)"
+              placeholderTextColor={colors.textSecondary}
+              value={zipcode}
+              onChangeText={setZipcode}
+              keyboardType="numeric"
+              maxLength={5}
               editable={!isSubmitting}
             />
           </View>
@@ -461,7 +499,7 @@ export default function JobRequestFormScreen() {
               />
               <Text style={styles.successText}>Job Request Submitted!</Text>
               <Text style={styles.successSubtext}>
-                Refresh Duct Cleaning will contact the customer soon.
+                The information has been sent to Housecall Pro and an email notification has been sent.
               </Text>
               <TouchableOpacity 
                 style={styles.resetButton} 
@@ -482,7 +520,7 @@ export default function JobRequestFormScreen() {
             color={colors.accent} 
           />
           <Text style={styles.infoText}>
-            Your technician information will be automatically included with this job request and sent to your CRM via Zapier.
+            Your technician information will be automatically included with this job request. The data will be sent to Housecall Pro via Zapier and an email notification will be sent to agoins@refreshductcleaning.com.
           </Text>
         </View>
       </ScrollView>
