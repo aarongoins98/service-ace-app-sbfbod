@@ -17,12 +17,10 @@ import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { saveUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { login } = useAuth();
   
   const [companyName, setCompanyName] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -70,7 +68,6 @@ export default function LoginScreen() {
       };
 
       await saveUserData(userData);
-      login(userData);
       console.log("User data saved successfully, redirecting to home page");
 
       // Redirect to home page after successful login
