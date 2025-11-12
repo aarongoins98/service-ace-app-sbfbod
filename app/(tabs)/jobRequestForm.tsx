@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   ScrollView, 
   StyleSheet, 
@@ -9,14 +9,21 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getUserData, TechnicianInfo } from "@/utils/userStorage";
+import { useRouter } from "expo-router";
 
 export default function JobRequestFormScreen() {
   const theme = useTheme();
+  const router = useRouter();
+  
+  const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
+  const [isLoadingTechnician, setIsLoadingTechnician] = useState(true);
   
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
@@ -25,6 +32,34 @@ export default function JobRequestFormScreen() {
   const [jobDescription, setJobDescription] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  useEffect(() => {
+    loadTechnicianInfo();
+  }, []);
+
+  const loadTechnicianInfo = async () => {
+    setIsLoadingTechnician(true);
+    try {
+      const data = await getUserData();
+      setTechnicianInfo(data);
+      if (!data) {
+        Alert.alert(
+          "Login Required",
+          "Please login first to submit job requests.",
+          [
+            {
+              text: "Go to Login",
+              onPress: () => router.push("/(tabs)/login"),
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error("Error loading technician info:", error);
+    } finally {
+      setIsLoadingTechnician(false);
+    }
+  };
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,6 +72,20 @@ export default function JobRequestFormScreen() {
   };
 
   const handleSubmit = async () => {
+    if (!technicianInfo) {
+      Alert.alert(
+        "Login Required",
+        "Please login first to submit job requests.",
+        [
+          {
+            text: "Go to Login",
+            onPress: () => router.push("/(tabs)/login"),
+          },
+        ]
+      );
+      return;
+    }
+
     // Validate inputs
     if (!customerName || !phone || !email || !address || !jobDescription) {
       Alert.alert("Missing Information", "Please fill in all required fields.");
@@ -53,27 +102,53 @@ export default function JobRequestFormScreen() {
       return;
     }
 
-    // Prepare data for submission
+    // Prepare data for submission including technician info
     const jobData = {
-      customerName,
-      phone,
-      email,
-      address,
+      // Technician Information
+      technician: {
+        companyName: technicianInfo.companyName,
+        firstName: technicianInfo.firstName,
+        lastName: technicianInfo.lastName,
+        phoneNumber: technicianInfo.phoneNumber,
+        email: technicianInfo.email,
+      },
+      // Customer Information
+      customer: {
+        name: customerName,
+        phone,
+        email,
+        address,
+      },
+      // Job Details
       jobDescription,
       preferredDate: preferredDate || "Not specified",
       submittedAt: new Date().toISOString(),
     };
 
-    console.log("Job Request Data:", jobData);
+    console.log("Job Request Data with Technician Info:", jobData);
 
     // Here you would integrate with Zapier webhook
-    // Example: await fetch('YOUR_ZAPIER_WEBHOOK_URL', { method: 'POST', body: JSON.stringify(jobData) });
+    // Example: 
+    // try {
+    //   const response = await fetch('YOUR_ZAPIER_WEBHOOK_URL', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(jobData),
+    //   });
+    //   if (response.ok) {
+    //     console.log('Successfully sent to Zapier');
+    //   }
+    // } catch (error) {
+    //   console.error('Error sending to Zapier:', error);
+    // }
     
     // For now, show success message
     setIsSubmitted(true);
     Alert.alert(
       "Success!", 
-      "Job request submitted successfully. You can integrate this with Zapier to send data to your CRM.",
+      `Job request submitted by ${technicianInfo.firstName} ${technicianInfo.lastName} from ${technicianInfo.companyName}. You can integrate this with Zapier to send data to your CRM.`,
       [
         {
           text: "OK",
@@ -95,6 +170,17 @@ export default function JobRequestFormScreen() {
     setIsSubmitted(false);
   };
 
+  if (isLoadingTechnician) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView 
@@ -111,6 +197,25 @@ export default function JobRequestFormScreen() {
           <Text style={styles.title}>Job Request Form</Text>
           <Text style={styles.subtitle}>Collect customer and job information</Text>
         </View>
+
+        {technicianInfo && (
+          <View style={styles.technicianBanner}>
+            <IconSymbol 
+              ios_icon_name="person.crop.circle.fill" 
+              android_material_icon_name="account_circle" 
+              size={24} 
+              color={colors.primary} 
+            />
+            <View style={styles.technicianInfo}>
+              <Text style={styles.technicianName}>
+                {technicianInfo.firstName} {technicianInfo.lastName}
+              </Text>
+              <Text style={styles.technicianCompany}>
+                {technicianInfo.companyName}
+              </Text>
+            </View>
+          </View>
+        )}
 
         <View style={styles.formContainer}>
           <Text style={styles.sectionTitle}>Customer Information</Text>
@@ -227,7 +332,7 @@ export default function JobRequestFormScreen() {
             color={colors.secondary} 
           />
           <Text style={styles.infoText}>
-            To integrate with your CRM via Zapier, you&apos;ll need to set up a webhook URL in the code and create a Zap that receives this data.
+            Your technician information will be automatically included with this job request. To integrate with your CRM via Zapier, you&apos;ll need to set up a webhook URL in the code and create a Zap that receives this data.
           </Text>
         </View>
       </ScrollView>
@@ -239,6 +344,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
   scrollContent: {
     paddingTop: Platform.OS === 'android' ? 20 : 0,
     paddingHorizontal: 24,
@@ -246,7 +361,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     marginTop: 20,
   },
   title: {
@@ -257,6 +372,33 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   subtitle: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.textSecondary,
+  },
+  technicianBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
+  },
+  technicianInfo: {
+    flex: 1,
+  },
+  technicianName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  technicianCompany: {
     fontSize: 14,
     fontWeight: '400',
     color: colors.textSecondary,

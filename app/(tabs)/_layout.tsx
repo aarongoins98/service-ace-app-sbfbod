@@ -47,6 +47,7 @@ export default function TabLayout() {
         <Stack.Screen key="pricingTool" name="pricingTool" />
         <Stack.Screen key="jobRequestForm" name="jobRequestForm" />
         <Stack.Screen key="profile" name="profile" />
+        <Stack.Screen key="login" name="login" options={{ animation: 'slide_from_right' }} />
       </Stack>
       <FloatingTabBar tabs={tabs} />
     </>

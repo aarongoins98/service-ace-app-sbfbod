@@ -1,68 +1,206 @@
 
-import React from "react";
-import { ScrollView, StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { ScrollView, StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
+import { colors } from "@/styles/commonStyles";
+import { getUserData, TechnicianInfo } from "@/utils/userStorage";
 
 export default function HomeScreen() {
   const theme = useTheme();
+  const router = useRouter();
+  const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadTechnicianInfo();
+  }, []);
+
+  const loadTechnicianInfo = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getUserData();
+      setTechnicianInfo(data);
+    } catch (error) {
+      console.error("Error loading technician info:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>Home Service Technician</Text>
-          <Text style={styles.subtitle}>Professional Tools for Field Work</Text>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.header}>
+        <IconSymbol 
+          ios_icon_name="wrench.and.screwdriver.fill" 
+          android_material_icon_name="build" 
+          size={72} 
+          color={colors.primary} 
+        />
+        <Text style={styles.title}>HVAC Service Tool</Text>
+        <Text style={styles.subtitle}>
+          Professional pricing and job management for technicians
+        </Text>
+      </View>
+
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={colors.primary} />
         </View>
-
-        <View style={styles.cardsContainer}>
-          <Link href="/(tabs)/pricingTool" asChild>
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
-              <View style={styles.iconContainer}>
-                <IconSymbol 
-                  ios_icon_name="dollarsign.circle.fill" 
-                  android_material_icon_name="attach_money" 
-                  size={48} 
-                  color={colors.primary} 
-                />
-              </View>
-              <Text style={styles.cardTitle}>Pricing Tool</Text>
-              <Text style={styles.cardDescription}>
-                Calculate accurate quotes based on service variables
-              </Text>
-            </TouchableOpacity>
-          </Link>
-
-          <Link href="/(tabs)/jobRequestForm" asChild>
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
-              <View style={styles.iconContainer}>
-                <IconSymbol 
-                  ios_icon_name="doc.text.fill" 
-                  android_material_icon_name="description" 
-                  size={48} 
-                  color={colors.secondary} 
-                />
-              </View>
-              <Text style={styles.cardTitle}>Job Request Form</Text>
-              <Text style={styles.cardDescription}>
-                Collect customer information and job details
-              </Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
-
-        <View style={styles.infoSection}>
-          <Text style={styles.infoText}>
-            Streamline your workflow with professional tools designed for home service technicians
+      ) : technicianInfo ? (
+        <View style={styles.welcomeCard}>
+          <IconSymbol 
+            ios_icon_name="hand.wave.fill" 
+            android_material_icon_name="waving_hand" 
+            size={32} 
+            color={colors.accent} 
+          />
+          <Text style={styles.welcomeText}>
+            Welcome back, {technicianInfo.firstName}!
+          </Text>
+          <Text style={styles.welcomeSubtext}>
+            {technicianInfo.companyName}
           </Text>
         </View>
-      </ScrollView>
-    </View>
+      ) : (
+        <View style={styles.loginPrompt}>
+          <IconSymbol 
+            ios_icon_name="person.crop.circle.badge.exclamationmark" 
+            android_material_icon_name="person_add" 
+            size={48} 
+            color={colors.textSecondary} 
+          />
+          <Text style={styles.loginPromptTitle}>Login Required</Text>
+          <Text style={styles.loginPromptText}>
+            Please login to save your information and submit job requests
+          </Text>
+          <TouchableOpacity 
+            style={styles.loginButton} 
+            onPress={() => router.push("/(tabs)/login")}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.loginButtonText}>Go to Login</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        
+        <Link href="/(tabs)/pricingTool" asChild>
+          <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
+            <View style={styles.actionIconContainer}>
+              <IconSymbol 
+                ios_icon_name="dollarsign.circle.fill" 
+                android_material_icon_name="attach_money" 
+                size={40} 
+                color={colors.primary} 
+              />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Pricing Tool</Text>
+              <Text style={styles.actionDescription}>
+                Calculate quotes based on square footage, HVAC systems, and location
+              </Text>
+            </View>
+            <IconSymbol 
+              ios_icon_name="chevron.right" 
+              android_material_icon_name="chevron_right" 
+              size={24} 
+              color={colors.textSecondary} 
+            />
+          </TouchableOpacity>
+        </Link>
+
+        <Link href="/(tabs)/jobRequestForm" asChild>
+          <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
+            <View style={styles.actionIconContainer}>
+              <IconSymbol 
+                ios_icon_name="doc.text.fill" 
+                android_material_icon_name="description" 
+                size={40} 
+                color={colors.secondary} 
+              />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Job Request Form</Text>
+              <Text style={styles.actionDescription}>
+                Collect customer information and submit job requests to your CRM
+              </Text>
+            </View>
+            <IconSymbol 
+              ios_icon_name="chevron.right" 
+              android_material_icon_name="chevron_right" 
+              size={24} 
+              color={colors.textSecondary} 
+            />
+          </TouchableOpacity>
+        </Link>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Features</Text>
+        <View style={styles.featuresGrid}>
+          <View style={styles.featureItem}>
+            <IconSymbol 
+              ios_icon_name="checkmark.circle.fill" 
+              android_material_icon_name="check_circle" 
+              size={28} 
+              color={colors.success} 
+            />
+            <Text style={styles.featureText}>Quick pricing calculations</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <IconSymbol 
+              ios_icon_name="checkmark.circle.fill" 
+              android_material_icon_name="check_circle" 
+              size={28} 
+              color={colors.success} 
+            />
+            <Text style={styles.featureText}>Zipcode-based surcharges</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <IconSymbol 
+              ios_icon_name="checkmark.circle.fill" 
+              android_material_icon_name="check_circle" 
+              size={28} 
+              color={colors.success} 
+            />
+            <Text style={styles.featureText}>CRM integration ready</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <IconSymbol 
+              ios_icon_name="checkmark.circle.fill" 
+              android_material_icon_name="check_circle" 
+              size={28} 
+              color={colors.success} 
+            />
+            <Text style={styles.featureText}>Optimized for tablets</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.infoCard}>
+        <IconSymbol 
+          ios_icon_name="info.circle.fill" 
+          android_material_icon_name="info" 
+          size={24} 
+          color={colors.accent} 
+        />
+        <View style={styles.infoContent}>
+          <Text style={styles.infoTitle}>Integration Ready</Text>
+          <Text style={styles.infoText}>
+            This app is designed to work with Zapier for seamless CRM integration. 
+            Configure your webhook in the job request form to start sending data automatically.
+          </Text>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -77,12 +215,13 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
   },
   title: {
     fontSize: 32,
     fontWeight: '700',
     color: colors.text,
+    marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -91,49 +230,162 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: colors.textSecondary,
     textAlign: 'center',
+    paddingHorizontal: 20,
   },
-  cardsContainer: {
-    gap: 20,
-    marginBottom: 40,
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
   },
-  card: {
+  welcomeCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 24,
+    marginBottom: 32,
     alignItems: 'center',
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-    elevation: 3,
     borderWidth: 1,
     borderColor: colors.border,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
   },
-  iconContainer: {
-    marginBottom: 16,
-  },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: '600',
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 8,
-    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 4,
   },
-  cardDescription: {
+  welcomeSubtext: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: colors.textSecondary,
+  },
+  loginPrompt: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 32,
+    marginBottom: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
+  },
+  loginPromptTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  loginPromptText: {
     fontSize: 14,
     fontWeight: '400',
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    marginBottom: 20,
   },
-  infoSection: {
-    backgroundColor: colors.highlight,
+  loginButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    padding: 14,
+    paddingHorizontal: 32,
+  },
+  loginButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 20,
+    marginBottom: 12,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
+  },
+  actionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: colors.background,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionContent: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  actionDescription: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  featuresGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    width: '48%',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  featureText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  infoCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 20,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
     fontWeight: '400',
-    color: colors.text,
-    textAlign: 'center',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
 });
