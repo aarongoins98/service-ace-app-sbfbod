@@ -68,24 +68,23 @@ export default function LoginScreen() {
       };
 
       await saveUserData(userData);
+      console.log("User data saved successfully, redirecting to home page");
 
-      Alert.alert(
-        "Success!", 
-        "Your information has been saved successfully.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              console.log("Login successful, navigating to home");
-              router.replace("/(tabs)/(home)/");
-            }
-          }
-        ]
-      );
+      // Redirect to home page after successful login
+      setIsLoading(false);
+      router.replace("/(tabs)/(home)/");
+      
+      // Show success message after navigation
+      setTimeout(() => {
+        Alert.alert(
+          "Success!", 
+          "Your information has been saved successfully."
+        );
+      }, 500);
     } catch (error) {
       console.error("Error saving user data:", error);
-      Alert.alert("Error", "Failed to save your information. Please try again.");
       setIsLoading(false);
+      Alert.alert("Error", "Failed to save your information. Please try again.");
     }
   };
 
