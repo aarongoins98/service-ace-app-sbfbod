@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
   Modal,
+  Pressable,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -21,6 +22,7 @@ import { saveUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
 import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 import { supabase } from "@/app/integrations/supabase/client";
+import * as Haptics from "expo-haptics";
 
 interface Company {
   id: string;
@@ -134,6 +136,13 @@ export default function LoginScreen() {
       email,
       isLoading
     });
+
+    // Provide haptic feedback
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (error) {
+      console.log("Haptics not available:", error);
+    }
     
     // Validate inputs
     if (!companyName || !firstName || !lastName || !phoneNumber || !email) {
@@ -222,7 +231,7 @@ export default function LoginScreen() {
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
         >
           <View style={styles.header}>
             <IconSymbol 
@@ -248,10 +257,12 @@ export default function LoginScreen() {
                   <Text style={styles.loadingText}>Loading companies...</Text>
                 </View>
               ) : (
-                <TouchableOpacity
-                  style={styles.pickerButton}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.pickerButton,
+                    pressed && styles.pickerButtonPressed
+                  ]}
                   onPress={handleOpenCompanyPicker}
-                  activeOpacity={0.7}
                 >
                   <Text style={[styles.pickerButtonText, !companyName && styles.pickerPlaceholder]}>
                     {companyName || "Select a company"}
@@ -262,7 +273,7 @@ export default function LoginScreen() {
                     size={20} 
                     color={colors.textSecondary} 
                   />
-                </TouchableOpacity>
+                </Pressable>
               )}
             </View>
 
@@ -330,10 +341,13 @@ export default function LoginScreen() {
               ) : null}
             </View>
 
-            <TouchableOpacity 
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
+            <Pressable 
+              style={({ pressed }) => [
+                styles.loginButton,
+                isLoading && styles.loginButtonDisabled,
+                pressed && !isLoading && styles.loginButtonPressed
+              ]}
               onPress={handleLogin}
-              activeOpacity={0.7}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -344,7 +358,7 @@ export default function LoginScreen() {
               ) : (
                 <Text style={styles.loginButtonText}>Save & Continue</Text>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={styles.infoBox}>
@@ -369,18 +383,16 @@ export default function LoginScreen() {
         onRequestClose={handleCloseCompanyPicker}
       >
         <View style={styles.modalOverlay}>
-          <TouchableOpacity 
+          <Pressable 
             style={styles.modalOverlayTouchable}
-            activeOpacity={1}
             onPress={handleCloseCompanyPicker}
           />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Company</Text>
-              <TouchableOpacity 
+              <Pressable 
                 onPress={handleCloseCompanyPicker}
                 style={styles.modalCloseButton}
-                activeOpacity={0.7}
               >
                 <IconSymbol 
                   ios_icon_name="xmark.circle.fill" 
@@ -388,7 +400,7 @@ export default function LoginScreen() {
                   size={28} 
                   color={colors.textSecondary} 
                 />
-              </TouchableOpacity>
+              </Pressable>
             </View>
             
             {/* Search Input */}
@@ -410,10 +422,9 @@ export default function LoginScreen() {
                 autoCorrect={false}
               />
               {companySearchQuery.length > 0 && (
-                <TouchableOpacity 
+                <Pressable 
                   onPress={() => setCompanySearchQuery("")}
                   style={styles.clearSearchButton}
-                  activeOpacity={0.7}
                 >
                   <IconSymbol 
                     ios_icon_name="xmark.circle.fill" 
@@ -421,13 +432,13 @@ export default function LoginScreen() {
                     size={20} 
                     color={colors.textSecondary} 
                   />
-                </TouchableOpacity>
+                </Pressable>
               )}
             </View>
 
             <ScrollView 
               style={styles.modalList}
-              keyboardShouldPersistTaps="handled"
+              keyboardShouldPersistTaps="always"
             >
               {filteredCompanies.length === 0 ? (
                 <View style={styles.emptyCompanies}>
@@ -450,14 +461,14 @@ export default function LoginScreen() {
               ) : (
                 <React.Fragment>
                   {filteredCompanies.map((company) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={company.id}
-                      style={[
+                      style={({ pressed }) => [
                         styles.companyOption,
-                        companyName === company.name && styles.companyOptionSelected
+                        companyName === company.name && styles.companyOptionSelected,
+                        pressed && styles.companyOptionPressed
                       ]}
                       onPress={() => handleSelectCompany(company)}
-                      activeOpacity={0.7}
                     >
                       <IconSymbol 
                         ios_icon_name="building.2.fill" 
@@ -479,7 +490,7 @@ export default function LoginScreen() {
                           color={colors.primary} 
                         />
                       )}
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </React.Fragment>
               )}
@@ -510,7 +521,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: Platform.OS === 'android' ? 48 : 20,
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   header: {
     alignItems: 'center',
@@ -589,6 +600,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
+  loginButtonPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
+  },
   loginButtonDisabled: {
     opacity: 0.6,
   },
@@ -642,6 +657,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  pickerButtonPressed: {
+    opacity: 0.7,
   },
   pickerButtonText: {
     fontSize: 16,
@@ -719,6 +737,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  companyOptionPressed: {
+    opacity: 0.7,
   },
   companyOptionSelected: {
     backgroundColor: colors.background,
