@@ -38,6 +38,9 @@ const PRICING_CONFIG = {
   // HVAC system charge per unit
   hvacSystemCharge: 300,
   
+  // Partner discount percentage
+  partnerDiscountPercent: 20,
+  
   // Zipcode charges
   // Add or modify zipcodes and their associated charges here
   zipcodeCharges: {
@@ -167,6 +170,8 @@ export default function PricingToolScreen() {
     sqftCharge: number;
     hvacCharge: number;
     zipcodeCharge: number;
+    subtotal: number;
+    discount: number;
     total: number;
   } | null>(null);
 
@@ -206,13 +211,19 @@ export default function PricingToolScreen() {
     const sqftCharge = getSqftCharge(sqFt);
     const hvacCharge = hvacCount * PRICING_CONFIG.hvacSystemCharge;
     const zipcodeCharge = getZipcodeCharge(zipcode);
-    const total = sqftCharge + hvacCharge + zipcodeCharge;
+    const subtotal = sqftCharge + hvacCharge + zipcodeCharge;
+    
+    // Calculate 20% partner discount
+    const discount = subtotal * (PRICING_CONFIG.partnerDiscountPercent / 100);
+    const total = subtotal - discount;
 
     // Set the breakdown and total
     setBreakdown({
       sqftCharge,
       hvacCharge,
       zipcodeCharge,
+      subtotal,
+      discount,
       total,
     });
     setQuote(total);
@@ -224,6 +235,8 @@ export default function PricingToolScreen() {
       sqftCharge,
       hvacCharge,
       zipcodeCharge,
+      subtotal,
+      discount,
       total,
     });
   };
@@ -379,6 +392,28 @@ export default function PricingToolScreen() {
                 <View style={styles.breakdownDivider} />
 
                 <View style={styles.breakdownRow}>
+                  <Text style={styles.breakdownSubtotalLabel}>Subtotal</Text>
+                  <Text style={styles.breakdownSubtotalValue}>${breakdown.subtotal.toFixed(2)}</Text>
+                </View>
+
+                <View style={styles.breakdownRow}>
+                  <View style={styles.breakdownLeft}>
+                    <IconSymbol 
+                      ios_icon_name="tag.fill" 
+                      android_material_icon_name="local_offer" 
+                      size={16} 
+                      color="#22c55e" 
+                    />
+                    <Text style={styles.breakdownDiscountLabel}>
+                      Partner Discount ({PRICING_CONFIG.partnerDiscountPercent}%)
+                    </Text>
+                  </View>
+                  <Text style={styles.breakdownDiscountValue}>-${breakdown.discount.toFixed(2)}</Text>
+                </View>
+
+                <View style={styles.breakdownDivider} />
+
+                <View style={styles.breakdownRow}>
                   <Text style={styles.breakdownTotalLabel}>Total</Text>
                   <Text style={styles.breakdownTotalValue}>${breakdown.total.toFixed(2)}</Text>
                 </View>
@@ -418,6 +453,9 @@ export default function PricingToolScreen() {
             </Text>
             <Text style={styles.infoText}>
               - Location-based zipcode charges ($0-$200)
+            </Text>
+            <Text style={styles.infoText}>
+              - 20% Partner Discount automatically applied
             </Text>
           </View>
         </View>
@@ -563,6 +601,27 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginVertical: 12,
+  },
+  breakdownSubtotalLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  breakdownSubtotalValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  breakdownDiscountLabel: {
+    fontSize: 13,
+    color: '#22c55e',
+    fontWeight: '600',
+    flex: 1,
+  },
+  breakdownDiscountValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#22c55e',
   },
   breakdownTotalLabel: {
     fontSize: 16,
