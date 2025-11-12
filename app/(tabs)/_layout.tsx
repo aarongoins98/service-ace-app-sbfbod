@@ -51,6 +51,7 @@ export default function TabLayout() {
         <Stack.Screen key="adminLogin" name="adminLogin" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen key="zipcodeEditor" name="zipcodeEditor" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen key="zipcodeAnalyzer" name="zipcodeAnalyzer" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen key="companyEditor" name="companyEditor" options={{ animation: 'slide_from_right' }} />
       </Stack>
       <FloatingTabBar tabs={tabs} />
     </>

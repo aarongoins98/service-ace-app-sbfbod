@@ -29,6 +29,7 @@ export default function TabLayout() {
         <Stack.Screen name="adminLogin" />
         <Stack.Screen name="zipcodeEditor" />
         <Stack.Screen name="zipcodeAnalyzer" />
+        <Stack.Screen name="companyEditor" />
       </Stack>
     </>
   );

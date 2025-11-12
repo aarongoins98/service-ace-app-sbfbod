@@ -1,3 +1,4 @@
+
 import "react-native-reanimated";
 import React, { useEffect } from "react";
 import { useFonts } from "expo-font";
@@ -5,7 +6,7 @@ import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, Alert } from "react-native";
+import { useColorScheme, Alert, ErrorBoundary } from "react-native";
 import { useNetworkState } from "expo-network";
 import {
   DarkTheme,
@@ -23,16 +24,43 @@ export const unstable_settings = {
   initialRouteName: "(tabs)", // Ensure any route can link back to `/`
 };
 
+// Error Boundary Component
+function AppErrorBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary
+      onError={(error, stackTrace) => {
+        console.error('App Error:', error);
+        console.error('Stack Trace:', stackTrace);
+        Alert.alert(
+          'Application Error',
+          'An unexpected error occurred. Please restart the app.',
+          [{ text: 'OK' }]
+        );
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const networkState = useNetworkState();
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
   useEffect(() => {
+    if (error) {
+      console.error('Font loading error:', error);
+    }
+  }, [error]);
+
+  useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch((err) => {
+        console.error('Error hiding splash screen:', err);
+      });
     }
   }, [loaded]);
 
@@ -48,7 +76,7 @@ export default function RootLayout() {
     }
   }, [networkState.isConnected, networkState.isInternetReachable]);
 
-  if (!loaded) {
+  if (!loaded && !error) {
     return null;
   }
 
@@ -76,14 +104,15 @@ export default function RootLayout() {
       notification: "rgb(255, 69, 58)", // System Red (Dark Mode)
     },
   };
+  
   return (
-    <>
+    <AppErrorBoundary>
       <StatusBar style="auto" animated />
-        <ThemeProvider
-          value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
-        >
-          <WidgetProvider>
-            <GestureHandlerRootView>
+      <ThemeProvider
+        value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
+      >
+        <WidgetProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
             <Stack>
               {/* Main app with tabs */}
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -115,9 +144,9 @@ export default function RootLayout() {
               />
             </Stack>
             <SystemBars style={"auto"} />
-            </GestureHandlerRootView>
-          </WidgetProvider>
-        </ThemeProvider>
-    </>
+          </GestureHandlerRootView>
+        </WidgetProvider>
+      </ThemeProvider>
+    </AppErrorBoundary>
   );
 }
