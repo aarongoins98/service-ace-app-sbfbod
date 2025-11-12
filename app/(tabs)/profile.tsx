@@ -488,6 +488,22 @@ export default function ProfileScreen() {
             <Text style={styles.logoutButtonText}>Logout</Text>
           </TouchableOpacity>
         </View>
+
+        <View style={styles.adminLinkContainer}>
+          <TouchableOpacity 
+            style={styles.adminLink} 
+            onPress={() => router.push("/(tabs)/adminLogin")}
+            activeOpacity={0.7}
+          >
+            <IconSymbol 
+              ios_icon_name="lock.shield.fill" 
+              android_material_icon_name="admin_panel_settings" 
+              size={16} 
+              color={colors.textSecondary} 
+            />
+            <Text style={styles.adminLinkText}>Admin Login</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -734,5 +750,22 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontSize: 16,
     fontWeight: '600',
+  },
+  adminLinkContainer: {
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  adminLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  adminLinkText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
 });
