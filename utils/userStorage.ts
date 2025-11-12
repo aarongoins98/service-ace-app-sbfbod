@@ -1,6 +1,8 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// This interface is kept for backward compatibility but is no longer actively used
+// since the app no longer requires user login
 export interface TechnicianInfo {
   companyName: string;
   companyId?: string;

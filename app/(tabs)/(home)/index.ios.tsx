@@ -1,11 +1,10 @@
 
 import { Link, useRouter } from "expo-router";
 import { useTheme } from "@react-navigation/native";
-import { ScrollView, StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Image, Alert } from "react-native";
-import React, { useState, useEffect } from "react";
+import { ScrollView, StyleSheet, View, Text, TouchableOpacity, Image } from "react-native";
+import React from "react";
 import { GlassView } from "expo-glass-effect";
 import { colors } from "@/styles/commonStyles";
-import { getUserData, TechnicianInfo } from "@/utils/userStorage";
 import { IconSymbol } from "@/components/IconSymbol";
 
 const styles = StyleSheet.create({
@@ -60,11 +59,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 8,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   logoContainer: {
     alignItems: "center",
     marginBottom: 30,
@@ -79,150 +73,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    color: colors.error,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  retryButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  loginPromptCard: {
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 32,
-    marginBottom: 20,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  loginPromptTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  loginPromptDescription: {
-    fontSize: 16,
-    opacity: 0.7,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
 });
 
 export default function HomeScreen() {
   const { colors: themeColors } = useTheme();
-  const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    loadTechnicianInfo();
-  }, []);
-
-  const loadTechnicianInfo = async () => {
-    console.log("Loading technician info...");
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getUserData();
-      console.log("Technician info loaded:", data);
-      setTechnicianInfo(data);
-    } catch (err) {
-      console.error("Error loading technician info:", err);
-      setError("Failed to load user data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLoginPress = () => {
-    console.log("Login button pressed - navigating to login screen");
-    try {
-      router.push("/(tabs)/login");
-      console.log("Navigation initiated");
-    } catch (error) {
-      console.error("Navigation error:", error);
-      Alert.alert("Error", "Failed to navigate to login screen");
-    }
-  };
-
-  if (loading) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadTechnicianInfo}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  if (!technicianInfo) {
-    return (
-      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <Text style={[styles.welcomeText, { color: themeColors.text }]}>
-              Welcome!
-            </Text>
-            <Text style={[styles.subtitleText, { color: themeColors.text }]}>
-              Please log in to continue
-            </Text>
-          </View>
-
-          <View style={styles.loginPromptCard}>
-            <IconSymbol 
-              ios_icon_name="person.crop.circle.badge.checkmark" 
-              android_material_icon_name="how_to_reg" 
-              size={64} 
-              color={colors.primary} 
-            />
-            <Text style={[styles.loginPromptTitle, { color: themeColors.text }]}>
-              Get Started
-            </Text>
-            <Text style={[styles.loginPromptDescription, { color: themeColors.text }]}>
-              Log in to access pricing tools and job request forms
-            </Text>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleLoginPress}
-              activeOpacity={0.7}
-            >
-              <IconSymbol ios_icon_name="person.fill" android_material_icon_name="person" size={20} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Log In</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-    );
-  }
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -233,16 +88,16 @@ export default function HomeScreen() {
             style={styles.logo}
           />
           <Text style={[styles.companyName, { color: themeColors.text }]}>
-            {technicianInfo.companyName || "Refresh"}
+            Refresh
           </Text>
         </View>
 
         <View style={styles.header}>
           <Text style={[styles.welcomeText, { color: themeColors.text }]}>
-            Welcome back,
+            Welcome!
           </Text>
           <Text style={[styles.subtitleText, { color: themeColors.text }]}>
-            {technicianInfo.firstName} {technicianInfo.lastName}
+            Choose a tool to get started
           </Text>
         </View>
 

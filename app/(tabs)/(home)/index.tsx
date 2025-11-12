@@ -5,52 +5,10 @@ import { useTheme } from "@react-navigation/native";
 import { IconSymbol } from "@/components/IconSymbol";
 import { Link, useRouter } from "expo-router";
 import { colors } from "@/styles/commonStyles";
-import { getUserData, TechnicianInfo } from "@/utils/userStorage";
 
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const [technicianInfo, setTechnicianInfo] = useState<TechnicianInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadTechnicianInfo();
-  }, []);
-
-  const loadTechnicianInfo = async () => {
-    console.log("Loading technician info...");
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getUserData();
-      console.log("Technician info loaded:", data);
-      setTechnicianInfo(data);
-    } catch (error) {
-      console.error("Error loading technician info:", error);
-      setError("Failed to load user data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLoginPress = () => {
-    console.log("Login button pressed - navigating to login screen");
-    router.push("/(tabs)/login");
-  };
-
-  if (error) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadTechnicianInfo}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <ScrollView 
@@ -69,46 +27,6 @@ export default function HomeScreen() {
           The most Refreshing way to order cleaner, healthy ducts.
         </Text>
       </View>
-
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      ) : technicianInfo ? (
-        <View style={styles.welcomeCard}>
-          <Image 
-            source={require('@/assets/images/d267bad1-e496-425e-b0d6-878ba5fd01f2.png')}
-            style={styles.welcomeLogo}
-            resizeMode="contain"
-          />
-          <Text style={styles.welcomeText}>
-            Welcome back, {technicianInfo.firstName}!
-          </Text>
-          <Text style={styles.welcomeSubtext}>
-            {technicianInfo.companyName}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.loginPrompt}>
-          <IconSymbol 
-            ios_icon_name="person.crop.circle.badge.exclamationmark" 
-            android_material_icon_name="person_add" 
-            size={48} 
-            color={colors.textSecondary} 
-          />
-          <Text style={styles.loginPromptTitle}>Login Required</Text>
-          <Text style={styles.loginPromptText}>
-            Please login to save your information and submit job requests
-          </Text>
-          <TouchableOpacity 
-            style={styles.loginButton} 
-            onPress={handleLoginPress}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.loginButtonText}>Go to Login</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Why Refresh?</Text>
@@ -263,97 +181,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 20,
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    color: colors.error,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  welcomeCard: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 32,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-    elevation: 2,
-  },
-  welcomeLogo: {
-    width: 180,
-    height: 90,
-    marginBottom: 12,
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.text,
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  welcomeSubtext: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: colors.textSecondary,
-  },
-  loginPrompt: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 32,
-    marginBottom: 32,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-    elevation: 2,
-  },
-  loginPromptTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  loginPromptText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  loginButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    padding: 14,
-    paddingHorizontal: 32,
-  },
-  loginButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   section: {
     marginBottom: 32,
