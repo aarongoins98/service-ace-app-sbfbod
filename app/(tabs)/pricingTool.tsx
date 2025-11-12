@@ -265,7 +265,7 @@ export default function PricingToolScreen() {
           <IconSymbol 
             ios_icon_name="dollarsign.circle.fill" 
             android_material_icon_name="attach_money" 
-            size={56} 
+            size={64} 
             color={colors.primary} 
           />
           <Text style={styles.title}>Pricing Tool</Text>
