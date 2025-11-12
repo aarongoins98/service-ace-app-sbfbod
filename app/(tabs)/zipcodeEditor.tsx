@@ -250,6 +250,19 @@ export default function ZipcodeEditorScreen() {
               <Text style={styles.analyzerButtonText}>Analyzer</Text>
             </TouchableOpacity>
             <TouchableOpacity 
+              style={styles.companyButton} 
+              onPress={() => router.push("/(tabs)/companyEditor")}
+              activeOpacity={0.8}
+            >
+              <IconSymbol 
+                ios_icon_name="building.2.fill" 
+                android_material_icon_name="business" 
+                size={20} 
+                color={colors.primary} 
+              />
+              <Text style={styles.companyButtonText}>Companies</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
               style={styles.logoutButton} 
               onPress={handleLogout}
               activeOpacity={0.8}
@@ -509,6 +522,22 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   analyzerButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  companyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  companyButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.primary,

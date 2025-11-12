@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   ScrollView, 
   StyleSheet, 
@@ -10,6 +10,8 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -18,18 +20,55 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { saveUserData, TechnicianInfo } from "@/utils/userStorage";
 import { useRouter } from "expo-router";
 import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
+import { supabase } from "@/app/integrations/supabase/client";
+
+interface Company {
+  id: string;
+  name: string;
+}
 
 export default function LoginScreen() {
   const theme = useTheme();
   const router = useRouter();
   
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [isLoadingCompanies, setIsLoadingCompanies] = useState(true);
   const [companyName, setCompanyName] = useState("");
+  const [showCompanyPicker, setShowCompanyPicker] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  const loadCompanies = async () => {
+    try {
+      setIsLoadingCompanies(true);
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error("Error loading companies:", error);
+        Alert.alert("Error", "Failed to load company list. Please try again.");
+        return;
+      }
+
+      setCompanies(data || []);
+      console.log(`Loaded ${data?.length || 0} companies`);
+    } catch (error) {
+      console.error("Error loading companies:", error);
+      Alert.alert("Error", "An error occurred while loading companies.");
+    } finally {
+      setIsLoadingCompanies(false);
+    }
+  };
 
   const capitalizeFirstLetter = (text: string): string => {
     if (!text) return text;
@@ -159,14 +198,28 @@ export default function LoginScreen() {
             
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Company Name *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter company name"
-                placeholderTextColor={colors.textSecondary}
-                value={companyName}
-                onChangeText={setCompanyName}
-                autoCapitalize="words"
-              />
+              {isLoadingCompanies ? (
+                <View style={styles.loadingPicker}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={styles.loadingText}>Loading companies...</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.pickerButton}
+                  onPress={() => setShowCompanyPicker(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.pickerButtonText, !companyName && styles.pickerPlaceholder]}>
+                    {companyName || "Select a company"}
+                  </Text>
+                  <IconSymbol 
+                    ios_icon_name="chevron.down" 
+                    android_material_icon_name="arrow_drop_down" 
+                    size={20} 
+                    color={colors.textSecondary} 
+                  />
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.divider} />
@@ -258,6 +311,84 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Company Picker Modal */}
+      <Modal
+        visible={showCompanyPicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowCompanyPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Company</Text>
+              <TouchableOpacity 
+                onPress={() => setShowCompanyPicker(false)}
+                style={styles.modalCloseButton}
+              >
+                <IconSymbol 
+                  ios_icon_name="xmark.circle.fill" 
+                  android_material_icon_name="cancel" 
+                  size={28} 
+                  color={colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalList}>
+              {companies.length === 0 ? (
+                <View style={styles.emptyCompanies}>
+                  <IconSymbol 
+                    ios_icon_name="building.2" 
+                    android_material_icon_name="business" 
+                    size={48} 
+                    color={colors.textSecondary} 
+                  />
+                  <Text style={styles.emptyText}>No companies available</Text>
+                  <Text style={styles.emptySubtext}>Contact your administrator to add companies</Text>
+                </View>
+              ) : (
+                companies.map((company) => (
+                  <TouchableOpacity
+                    key={company.id}
+                    style={[
+                      styles.companyOption,
+                      companyName === company.name && styles.companyOptionSelected
+                    ]}
+                    onPress={() => {
+                      setCompanyName(company.name);
+                      setShowCompanyPicker(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <IconSymbol 
+                      ios_icon_name="building.2.fill" 
+                      android_material_icon_name="business" 
+                      size={20} 
+                      color={companyName === company.name ? colors.primary : colors.textSecondary} 
+                    />
+                    <Text style={[
+                      styles.companyOptionText,
+                      companyName === company.name && styles.companyOptionTextSelected
+                    ]}>
+                      {company.name}
+                    </Text>
+                    {companyName === company.name && (
+                      <IconSymbol 
+                        ios_icon_name="checkmark.circle.fill" 
+                        android_material_icon_name="check_circle" 
+                        size={24} 
+                        color={colors.primary} 
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -375,5 +506,109 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: colors.textSecondary,
     lineHeight: 18,
+  },
+  loadingPicker: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  pickerButton: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pickerButtonText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  pickerPlaceholder: {
+    color: colors.textSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalList: {
+    padding: 20,
+  },
+  companyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  companyOptionSelected: {
+    backgroundColor: colors.background,
+    borderColor: colors.primary,
+    borderWidth: 2,
+  },
+  companyOptionText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  companyOptionTextSelected: {
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  emptyCompanies: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
 });
