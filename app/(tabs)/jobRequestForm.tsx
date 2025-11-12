@@ -46,6 +46,9 @@ export default function JobRequestFormScreen() {
   const [showCompanyPicker, setShowCompanyPicker] = useState(false);
   const [companySearchQuery, setCompanySearchQuery] = useState("");
   
+  // Submitter Information (NEW)
+  const [submitterName, setSubmitterName] = useState("");
+  
   // Property Information
   const [squareFootage, setSquareFootage] = useState("");
   const [hvacSystems, setHvacSystems] = useState("");
@@ -104,6 +107,11 @@ export default function JobRequestFormScreen() {
   const capitalizeFirstLetter = (text: string): string => {
     if (!text) return text;
     return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  const handleSubmitterNameChange = (text: string) => {
+    const capitalized = capitalizeFirstLetter(text);
+    setSubmitterName(capitalized);
   };
 
   const handleFirstNameChange = (text: string) => {
@@ -189,8 +197,8 @@ export default function JobRequestFormScreen() {
     console.log("=== JOB REQUEST SUBMISSION STARTED ===");
     console.log("Timestamp:", new Date().toISOString());
 
-    // Validate all required inputs
-    if (!companyName || !squareFootage || !hvacSystems || !customerFirstName || !customerLastName || 
+    // Validate all required inputs (including new submitterName field)
+    if (!companyName || !submitterName || !squareFootage || !hvacSystems || !customerFirstName || !customerLastName || 
         !phone || !email || !streetAddress || !city || !state || !zipcode) {
       console.log("ERROR: Missing required fields");
       Alert.alert("Missing Information", "Please fill in all required fields. Job Description and Preferred Date are optional.");
@@ -267,6 +275,7 @@ export default function JobRequestFormScreen() {
       companyInformation: {
         companyName: companyName,
         companyId: selectedCompanyId,
+        submittedBy: submitterName,
       },
       
       metadata: {
@@ -366,6 +375,7 @@ export default function JobRequestFormScreen() {
     console.log("Resetting form");
     setCompanyName("");
     setSelectedCompanyId("");
+    setSubmitterName("");
     setSquareFootage("");
     setHvacSystems("");
     setSelectedService("duct_cleaning");
@@ -431,6 +441,23 @@ export default function JobRequestFormScreen() {
                 />
               </TouchableOpacity>
             )}
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Your Name *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your name"
+              placeholderTextColor={colors.textSecondary}
+              value={submitterName}
+              onChangeText={handleSubmitterNameChange}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              editable={!isSubmitting}
+            />
+            <Text style={styles.helperText}>
+              This helps us identify who from the company submitted this request
+            </Text>
           </View>
 
           <View style={styles.divider} />
