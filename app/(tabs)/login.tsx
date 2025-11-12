@@ -44,11 +44,13 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    console.log("LoginScreen mounted");
     loadCompanies();
   }, []);
 
   const loadCompanies = async () => {
     try {
+      console.log("Loading companies from Supabase...");
       setIsLoadingCompanies(true);
       const { data, error } = await supabase
         .from('companies')
@@ -62,9 +64,9 @@ export default function LoginScreen() {
       }
 
       setCompanies(data || []);
-      console.log(`Loaded ${data?.length || 0} companies`);
+      console.log(`Loaded ${data?.length || 0} companies successfully`);
     } catch (error) {
-      console.error("Error loading companies:", error);
+      console.error("Exception while loading companies:", error);
       Alert.alert("Error", "An error occurred while loading companies.");
     } finally {
       setIsLoadingCompanies(false);
@@ -123,17 +125,25 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
-    console.log("Login button pressed");
+    console.log("=== LOGIN BUTTON PRESSED ===");
+    console.log("Current form state:", {
+      companyName,
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      isLoading
+    });
     
     // Validate inputs
     if (!companyName || !firstName || !lastName || !phoneNumber || !email) {
-      console.log("Missing fields detected");
+      console.log("Validation failed: Missing fields");
       Alert.alert("Missing Information", "Please fill in all fields.");
       return;
     }
 
     if (!validateEmail(email)) {
-      console.log("Invalid email format");
+      console.log("Validation failed: Invalid email format");
       setEmailError("Invalid email format. Please use format: xxx@xxx.xx");
       Alert.alert(
         "Invalid Email Format", 
@@ -143,7 +153,7 @@ export default function LoginScreen() {
     }
 
     if (!validatePhone(phoneNumber)) {
-      console.log("Invalid phone number");
+      console.log("Validation failed: Invalid phone number");
       Alert.alert("Invalid Phone", "Please enter a valid 10-digit phone number.");
       return;
     }
@@ -177,6 +187,7 @@ export default function LoginScreen() {
       }, 500);
       
       setIsLoading(false);
+      console.log("Login process completed successfully");
     } catch (error) {
       console.error("Error during login process:", error);
       setIsLoading(false);
@@ -185,16 +196,19 @@ export default function LoginScreen() {
   };
 
   const handleOpenCompanyPicker = () => {
+    console.log("Opening company picker");
     setCompanySearchQuery("");
     setShowCompanyPicker(true);
   };
 
   const handleCloseCompanyPicker = () => {
+    console.log("Closing company picker");
     setShowCompanyPicker(false);
     setCompanySearchQuery("");
   };
 
   const handleSelectCompany = (company: Company) => {
+    console.log("Selected company:", company.name);
     setCompanyName(company.name);
     handleCloseCompanyPicker();
   };
@@ -319,7 +333,7 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
               onPress={handleLogin}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -366,6 +380,7 @@ export default function LoginScreen() {
               <TouchableOpacity 
                 onPress={handleCloseCompanyPicker}
                 style={styles.modalCloseButton}
+                activeOpacity={0.7}
               >
                 <IconSymbol 
                   ios_icon_name="xmark.circle.fill" 
@@ -398,6 +413,7 @@ export default function LoginScreen() {
                 <TouchableOpacity 
                   onPress={() => setCompanySearchQuery("")}
                   style={styles.clearSearchButton}
+                  activeOpacity={0.7}
                 >
                   <IconSymbol 
                     ios_icon_name="xmark.circle.fill" 

@@ -102,6 +102,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  loginPromptCard: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 32,
+    marginBottom: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  loginPromptTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  loginPromptDescription: {
+    fontSize: 16,
+    opacity: 0.7,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
 });
 
 export default function HomeScreen() {
@@ -116,16 +137,29 @@ export default function HomeScreen() {
   }, []);
 
   const loadTechnicianInfo = async () => {
+    console.log("Loading technician info...");
     setLoading(true);
     setError(null);
     try {
       const data = await getUserData();
+      console.log("Technician info loaded:", data);
       setTechnicianInfo(data);
     } catch (err) {
       console.error("Error loading technician info:", err);
       setError("Failed to load user data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLoginPress = () => {
+    console.log("Login button pressed - navigating to login screen");
+    try {
+      router.push("/(tabs)/login");
+      console.log("Navigation initiated");
+    } catch (error) {
+      console.error("Navigation error:", error);
+      Alert.alert("Error", "Failed to navigate to login screen");
     }
   };
 
@@ -163,21 +197,28 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          <GlassView style={styles.card} tint="light">
-            <Text style={[styles.cardTitle, { color: themeColors.text }]}>
+          <View style={styles.loginPromptCard}>
+            <IconSymbol 
+              ios_icon_name="person.crop.circle.badge.checkmark" 
+              android_material_icon_name="how_to_reg" 
+              size={64} 
+              color={colors.primary} 
+            />
+            <Text style={[styles.loginPromptTitle, { color: themeColors.text }]}>
               Get Started
             </Text>
-            <Text style={[styles.cardDescription, { color: themeColors.text }]}>
+            <Text style={[styles.loginPromptDescription, { color: themeColors.text }]}>
               Log in to access pricing tools and job request forms
             </Text>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => router.push("/(tabs)/login")}
+              onPress={handleLoginPress}
+              activeOpacity={0.7}
             >
               <IconSymbol ios_icon_name="person.fill" android_material_icon_name="person" size={20} color="#FFFFFF" />
               <Text style={styles.buttonText}>Log In</Text>
             </TouchableOpacity>
-          </GlassView>
+          </View>
         </ScrollView>
       </View>
     );
@@ -214,7 +255,11 @@ export default function HomeScreen() {
           </Text>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push("/(tabs)/pricingTool")}
+            onPress={() => {
+              console.log("Pricing Tool button pressed");
+              router.push("/(tabs)/pricingTool");
+            }}
+            activeOpacity={0.7}
           >
             <IconSymbol ios_icon_name="dollarsign.circle.fill" android_material_icon_name="attach_money" size={20} color="#FFFFFF" />
             <Text style={styles.buttonText}>Open Pricing Tool</Text>
@@ -230,7 +275,11 @@ export default function HomeScreen() {
           </Text>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push("/(tabs)/jobRequestForm")}
+            onPress={() => {
+              console.log("Job Request button pressed");
+              router.push("/(tabs)/jobRequestForm");
+            }}
+            activeOpacity={0.7}
           >
             <IconSymbol ios_icon_name="doc.text.fill" android_material_icon_name="description" size={20} color="#FFFFFF" />
             <Text style={styles.buttonText}>Create Job Request</Text>

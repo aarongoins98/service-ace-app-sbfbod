@@ -19,10 +19,12 @@ export default function HomeScreen() {
   }, []);
 
   const loadTechnicianInfo = async () => {
+    console.log("Loading technician info...");
     setIsLoading(true);
     setError(null);
     try {
       const data = await getUserData();
+      console.log("Technician info loaded:", data);
       setTechnicianInfo(data);
     } catch (error) {
       console.error("Error loading technician info:", error);
@@ -30,6 +32,11 @@ export default function HomeScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLoginPress = () => {
+    console.log("Login button pressed - navigating to login screen");
+    router.push("/(tabs)/login");
   };
 
   if (error) {
@@ -95,8 +102,8 @@ export default function HomeScreen() {
           </Text>
           <TouchableOpacity 
             style={styles.loginButton} 
-            onPress={() => router.push("/(tabs)/login")}
-            activeOpacity={0.8}
+            onPress={handleLoginPress}
+            activeOpacity={0.7}
           >
             <Text style={styles.loginButtonText}>Go to Login</Text>
           </TouchableOpacity>
