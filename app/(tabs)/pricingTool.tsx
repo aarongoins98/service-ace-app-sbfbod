@@ -198,7 +198,7 @@ export default function PricingToolScreen() {
 
     const hvacCount = parseInt(hvacSystems);
     if (isNaN(hvacCount) || hvacCount < 0) {
-      Alert.alert("Invalid Input", "Please enter a valid number of HVAC systems (0 or greater).");
+      Alert.alert("Invalid Input", "Please enter a valid number of additional HVAC systems (0 or greater).");
       return;
     }
 
@@ -274,22 +274,22 @@ export default function PricingToolScreen() {
               keyboardType="numeric"
             />
             <Text style={styles.helperText}>
-              Ranges start at 0-999 sqft
+              This square footage includes 1 HVAC system in the price
             </Text>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Number of HVAC Systems</Text>
+            <Text style={styles.label}>Additional HVAC Systems</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter number of HVAC systems (e.g., 2)"
+              placeholder="Enter number of additional HVAC systems (e.g., 2)"
               placeholderTextColor={colors.textSecondary}
               value={hvacSystems}
               onChangeText={setHvacSystems}
               keyboardType="numeric"
             />
             <Text style={styles.helperText}>
-              ${PRICING_CONFIG.hvacSystemCharge} per HVAC system
+              ${PRICING_CONFIG.hvacSystemCharge} per additional HVAC system
             </Text>
           </View>
 
@@ -355,7 +355,7 @@ export default function PricingToolScreen() {
                       color={colors.textSecondary} 
                     />
                     <Text style={styles.breakdownLabel}>
-                      HVAC Systems ({hvacSystems} × ${PRICING_CONFIG.hvacSystemCharge})
+                      Additional HVAC Systems ({hvacSystems} × ${PRICING_CONFIG.hvacSystemCharge})
                     </Text>
                   </View>
                   <Text style={styles.breakdownValue}>${breakdown.hvacCharge.toFixed(2)}</Text>
@@ -411,10 +411,10 @@ export default function PricingToolScreen() {
               Pricing is calculated based on:
             </Text>
             <Text style={styles.infoText}>
-              - Square footage range (starting at $400)
+              - Square footage range (starting at $400, includes 1 HVAC system)
             </Text>
             <Text style={styles.infoText}>
-              - Number of HVAC systems ($300 each)
+              - Additional HVAC systems ($300 each)
             </Text>
             <Text style={styles.infoText}>
               - Location-based zipcode charges ($0-$200)
