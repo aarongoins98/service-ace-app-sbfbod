@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "@react-navigation/native";
 import { 
   View, 
@@ -12,6 +12,7 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  findNodeHandle,
 } from "react-native";
 import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,9 +22,13 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 import { formatPhoneNumber, getPhoneDigits } from "@/utils/phoneFormatter";
 
+// Additional padding to ensure field is fully visible
+const SCROLL_PADDING = 20;
+
 export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const scrollViewRef = useRef<ScrollView>(null);
   
   const [userData, setUserData] = useState<TechnicianInfo | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -61,6 +66,28 @@ export default function ProfileScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const scrollToInput = (inputRef: any) => {
+    if (!inputRef || !scrollViewRef.current) return;
+
+    setTimeout(() => {
+      inputRef.measureLayout(
+        findNodeHandle(scrollViewRef.current),
+        (x: number, y: number, width: number, height: number) => {
+          // Calculate the position to scroll to
+          const scrollToY = y - SCROLL_PADDING;
+          
+          scrollViewRef.current?.scrollTo({
+            y: scrollToY,
+            animated: true,
+          });
+        },
+        (error: any) => {
+          console.log("Error measuring input layout:", error);
+        }
+      );
+    }, 100);
   };
 
   const pickImage = async () => {
@@ -266,6 +293,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView 
+        ref={scrollViewRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -327,6 +355,7 @@ export default function ProfileScreen() {
                     style={styles.input}
                     value={companyName}
                     onChangeText={setCompanyName}
+                    onFocus={(e) => scrollToInput(e.target)}
                     placeholder="Company name"
                     placeholderTextColor={colors.textSecondary}
                   />
@@ -338,6 +367,7 @@ export default function ProfileScreen() {
                     style={styles.input}
                     value={firstName}
                     onChangeText={handleFirstNameChange}
+                    onFocus={(e) => scrollToInput(e.target)}
                     placeholder="First name"
                     placeholderTextColor={colors.textSecondary}
                   />
@@ -349,6 +379,7 @@ export default function ProfileScreen() {
                     style={styles.input}
                     value={lastName}
                     onChangeText={handleLastNameChange}
+                    onFocus={(e) => scrollToInput(e.target)}
                     placeholder="Last name"
                     placeholderTextColor={colors.textSecondary}
                   />
@@ -360,6 +391,7 @@ export default function ProfileScreen() {
                     style={styles.input}
                     value={phoneNumber}
                     onChangeText={handlePhoneChange}
+                    onFocus={(e) => scrollToInput(e.target)}
                     placeholder="(000)000-0000"
                     placeholderTextColor={colors.textSecondary}
                     keyboardType="phone-pad"
@@ -374,6 +406,7 @@ export default function ProfileScreen() {
                     value={email}
                     onChangeText={handleEmailChange}
                     onBlur={handleEmailBlur}
+                    onFocus={(e) => scrollToInput(e.target)}
                     placeholder="Email address"
                     placeholderTextColor={colors.textSecondary}
                     keyboardType="email-address"

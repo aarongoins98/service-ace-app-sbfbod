@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { 
   ScrollView, 
   StyleSheet, 
@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   Image,
+  findNodeHandle,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -173,8 +174,12 @@ const PRICING_CONFIG = {
   } as { [key: string]: number },
 };
 
+// Additional padding to ensure field is fully visible
+const SCROLL_PADDING = 20;
+
 export default function PricingToolScreen() {
   const theme = useTheme();
+  const scrollViewRef = useRef<ScrollView>(null);
   
   const [squareFootage, setSquareFootage] = useState("");
   const [hvacSystems, setHvacSystems] = useState("");
@@ -189,6 +194,28 @@ export default function PricingToolScreen() {
     total: number;
     cleanAndSealPrice: number;
   } | null>(null);
+
+  const scrollToInput = (inputRef: any) => {
+    if (!inputRef || !scrollViewRef.current) return;
+
+    setTimeout(() => {
+      inputRef.measureLayout(
+        findNodeHandle(scrollViewRef.current),
+        (x: number, y: number, width: number, height: number) => {
+          // Calculate the position to scroll to
+          const scrollToY = y - SCROLL_PADDING;
+          
+          scrollViewRef.current?.scrollTo({
+            y: scrollToY,
+            animated: true,
+          });
+        },
+        (error: any) => {
+          console.log("Error measuring input layout:", error);
+        }
+      );
+    }, 100);
+  };
 
   const getSqftCharge = (sqft: number): number => {
     const range = PRICING_CONFIG.sqftRanges.find(
@@ -308,6 +335,7 @@ export default function PricingToolScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView 
+        ref={scrollViewRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -336,6 +364,7 @@ export default function PricingToolScreen() {
               placeholderTextColor={colors.textSecondary}
               value={squareFootage}
               onChangeText={setSquareFootage}
+              onFocus={(e) => scrollToInput(e.target)}
               keyboardType="numeric"
             />
             <Text style={styles.helperText}>
@@ -351,6 +380,7 @@ export default function PricingToolScreen() {
               placeholderTextColor={colors.textSecondary}
               value={hvacSystems}
               onChangeText={setHvacSystems}
+              onFocus={(e) => scrollToInput(e.target)}
               keyboardType="numeric"
             />
             <Text style={styles.helperText}>
@@ -366,6 +396,7 @@ export default function PricingToolScreen() {
               placeholderTextColor={colors.textSecondary}
               value={zipcode}
               onChangeText={setZipcode}
+              onFocus={(e) => scrollToInput(e.target)}
               keyboardType="numeric"
               maxLength={5}
             />
