@@ -89,120 +89,95 @@ export default function HomeScreen() {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={styles.sectionTitle}>Why Refresh?</Text>
         
-        <Link href="/(tabs)/pricingTool" asChild>
-          <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
-            <GlassView style={styles.actionCardInner} intensity={80}>
-              <View style={styles.actionIconContainer}>
-                <IconSymbol 
-                  ios_icon_name="dollarsign.circle.fill" 
-                  android_material_icon_name="attach_money" 
-                  size={40} 
-                  color={colors.primary} 
-                />
-              </View>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Pricing Tool</Text>
-                <Text style={styles.actionDescription}>
-                  Calculate quotes based on square footage, HVAC systems, and location
-                </Text>
-              </View>
-              <IconSymbol 
-                ios_icon_name="chevron.right" 
-                android_material_icon_name="chevron_right" 
-                size={24} 
-                color={colors.textSecondary} 
-              />
-            </GlassView>
-          </TouchableOpacity>
-        </Link>
+        <GlassView style={styles.whyRefreshCard} intensity={80}>
+          <View style={styles.categoryHeader}>
+            <IconSymbol 
+              ios_icon_name="wrench.and.screwdriver.fill" 
+              android_material_icon_name="build" 
+              size={28} 
+              color={colors.primary} 
+            />
+            <Text style={styles.categoryTitle}>Our Technology</Text>
+          </View>
 
-        <Link href="/(tabs)/jobRequestForm" asChild>
-          <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
-            <GlassView style={styles.actionCardInner} intensity={80}>
-              <View style={styles.actionIconContainer}>
-                <IconSymbol 
-                  ios_icon_name="doc.text.fill" 
-                  android_material_icon_name="description" 
-                  size={40} 
-                  color={colors.secondary} 
-                />
+          <View style={styles.technologySection}>
+            <Text style={styles.technologyTitle}>Hypervac™ Truck-Mounted Duct Cleaning System</Text>
+            <View style={styles.bulletList}>
+              <View style={styles.bulletItem}>
+                <View style={styles.bullet} />
+                <Text style={styles.bulletText}>Gasoline-powered 35 HP engine generating up to 15,000 CFM of suction.</Text>
               </View>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Job Request Form</Text>
-                <Text style={styles.actionDescription}>
-                  Collect customer information and submit job requests to your CRM
-                </Text>
+              <View style={styles.bulletItem}>
+                <View style={styles.bullet} />
+                <Text style={styles.bulletText}>Safe for all duct types – metal, flex, or lined.</Text>
               </View>
-              <IconSymbol 
-                ios_icon_name="chevron.right" 
-                android_material_icon_name="chevron_right" 
-                size={24} 
-                color={colors.textSecondary} 
-              />
-            </GlassView>
-          </TouchableOpacity>
-        </Link>
+              <View style={styles.bulletItem}>
+                <View style={styles.bullet} />
+                <Text style={styles.bulletText}>Removes fine dust, debris, and construction residue that portable units miss.</Text>
+              </View>
+              <View style={styles.bulletItem}>
+                <View style={styles.bullet} />
+                <Text style={styles.bulletText}>Provides deep, source-removal cleaning through true negative air pressure.</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.technologySection}>
+            <Text style={styles.technologyTitle}>Aeroseal® Duct Sealing Technology:</Text>
+            <View style={styles.bulletList}>
+              <View style={styles.bulletItem}>
+                <View style={styles.bullet} />
+                <Text style={styles.bulletText}>Patented internal sealing process developed at Lawrence Berkeley National Laboratory.</Text>
+              </View>
+              <View style={styles.bulletItem}>
+                <View style={styles.bullet} />
+                <Text style={styles.bulletText}>Atomized polymer seals leaks up to ⅝ inch.</Text>
+              </View>
+              <View style={styles.bulletItem}>
+                <View style={styles.bullet} />
+                <Text style={styles.bulletText}>Achieves up to 90% reduction in leakage and 20–30% efficiency gains.</Text>
+              </View>
+              <View style={styles.bulletItem}>
+                <View style={styles.bullet} />
+                <Text style={styles.bulletText}>Includes printed before-and-after verification reports.</Text>
+              </View>
+            </View>
+          </View>
+        </GlassView>
+
+        <GlassView style={styles.whyRefreshCard} intensity={80}>
+          <View style={styles.categoryHeader}>
+            <IconSymbol 
+              ios_icon_name="star.fill" 
+              android_material_icon_name="star" 
+              size={28} 
+              color={colors.secondary} 
+            />
+            <Text style={styles.categoryTitle}>Professional Standards</Text>
+          </View>
+
+          <View style={styles.bulletList}>
+            <View style={styles.bulletItem}>
+              <View style={styles.bullet} />
+              <Text style={styles.bulletText}>Technicians wear shoe covers, use floor coverings and corner guards.</Text>
+            </View>
+            <View style={styles.bulletItem}>
+              <View style={styles.bullet} />
+              <Text style={styles.bulletText}>HVAC systems are fully isolated before cleaning/sealing.</Text>
+            </View>
+            <View style={styles.bulletItem}>
+              <View style={styles.bullet} />
+              <Text style={styles.bulletText}>Every job includes photo documentation and measurable results.</Text>
+            </View>
+            <View style={styles.bulletItem}>
+              <View style={styles.bullet} />
+              <Text style={styles.bulletText}>Crews leave each home cleaner than they found it.</Text>
+            </View>
+          </View>
+        </GlassView>
       </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Features</Text>
-        <View style={styles.featuresGrid}>
-          <GlassView style={styles.featureItem} intensity={80}>
-            <IconSymbol 
-              ios_icon_name="checkmark.circle.fill" 
-              android_material_icon_name="check_circle" 
-              size={28} 
-              color={colors.success} 
-            />
-            <Text style={styles.featureText}>Quick pricing calculations</Text>
-          </GlassView>
-          <GlassView style={styles.featureItem} intensity={80}>
-            <IconSymbol 
-              ios_icon_name="checkmark.circle.fill" 
-              android_material_icon_name="check_circle" 
-              size={28} 
-              color={colors.success} 
-            />
-            <Text style={styles.featureText}>Zipcode-based surcharges</Text>
-          </GlassView>
-          <GlassView style={styles.featureItem} intensity={80}>
-            <IconSymbol 
-              ios_icon_name="checkmark.circle.fill" 
-              android_material_icon_name="check_circle" 
-              size={28} 
-              color={colors.success} 
-            />
-            <Text style={styles.featureText}>CRM integration ready</Text>
-          </GlassView>
-          <GlassView style={styles.featureItem} intensity={80}>
-            <IconSymbol 
-              ios_icon_name="checkmark.circle.fill" 
-              android_material_icon_name="check_circle" 
-              size={28} 
-              color={colors.success} 
-            />
-            <Text style={styles.featureText}>Optimized for tablets</Text>
-          </GlassView>
-        </View>
-      </View>
-
-      <GlassView style={styles.infoCard} intensity={80}>
-        <IconSymbol 
-          ios_icon_name="info.circle.fill" 
-          android_material_icon_name="info" 
-          size={24} 
-          color={colors.accent} 
-        />
-        <View style={styles.infoContent}>
-          <Text style={styles.infoTitle}>Integration Ready</Text>
-          <Text style={styles.infoText}>
-            This app is designed to work with Zapier for seamless CRM integration. 
-            Configure your webhook in the job request form to start sending data automatically.
-          </Text>
-        </View>
-      </GlassView>
     </ScrollView>
   );
 }
@@ -306,85 +281,55 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   sectionTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 20,
+  },
+  whyRefreshCard: {
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  categoryTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 16,
   },
-  actionCard: {
-    marginBottom: 12,
+  technologySection: {
+    marginBottom: 20,
   },
-  actionCardInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    padding: 20,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  actionIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  actionDescription: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  featuresGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-    width: '48%',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  featureText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.text,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    padding: 20,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  infoContent: {
-    flex: 1,
-  },
-  infoTitle: {
+  technologyTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  infoText: {
+  bulletList: {
+    gap: 12,
+  },
+  bulletItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  bullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+    marginTop: 7,
+  },
+  bulletText: {
+    flex: 1,
     fontSize: 14,
     fontWeight: '400',
     color: colors.textSecondary,
