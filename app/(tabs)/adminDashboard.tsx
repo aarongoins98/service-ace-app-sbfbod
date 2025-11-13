@@ -81,14 +81,19 @@ export default function AdminDashboardScreen() {
 
   const checkAdminSession = async () => {
     try {
-      console.log("Checking admin session...");
+      console.log("=== Admin Dashboard: Checking Session ===");
       setIsCheckingAuth(true);
       
-      // Add a small delay to ensure AsyncStorage is ready on iOS
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Add a delay to ensure AsyncStorage is ready, especially on iOS
+      if (Platform.OS === 'ios') {
+        console.log("iOS detected, adding delay before session check...");
+        await new Promise(resolve => setTimeout(resolve, 200));
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       
       const session = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
-      console.log("Admin session value:", session);
+      console.log("Admin session value retrieved:", session);
       
       if (session !== "true") {
         console.log("No valid admin session found, redirecting to login");
@@ -97,10 +102,11 @@ export default function AdminDashboardScreen() {
         return;
       }
       
-      console.log("Admin session verified");
+      console.log("Admin session verified successfully");
       setIsCheckingAuth(false);
     } catch (error) {
-      console.error("Error checking admin session:", error);
+      console.error("=== Admin Dashboard: Session Check Error ===");
+      console.error("Error details:", error);
       Alert.alert("Error", "Failed to verify admin session. Please login again.");
       router.replace("/(tabs)/adminLogin");
     }
@@ -117,12 +123,18 @@ export default function AdminDashboardScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              console.log("Logging out admin...");
+              console.log("=== Admin Logout ===");
+              console.log("Removing admin session...");
               await AsyncStorage.removeItem(ADMIN_SESSION_KEY);
-              console.log("Admin session removed");
+              console.log("Admin session removed successfully");
+              
+              // Add a small delay to ensure removal completes
+              await new Promise(resolve => setTimeout(resolve, 100));
+              
               router.replace("/(tabs)/adminLogin");
             } catch (error) {
-              console.error("Error logging out:", error);
+              console.error("=== Admin Logout Error ===");
+              console.error("Error details:", error);
               Alert.alert("Error", "Failed to logout. Please try again.");
             }
           },

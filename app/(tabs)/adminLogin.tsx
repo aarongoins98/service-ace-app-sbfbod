@@ -30,48 +30,73 @@ export default function AdminLoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
+    console.log("=== Admin Login Started ===");
+    console.log("Password entered:", password ? "***" : "(empty)");
+    
     if (!password) {
       Alert.alert("Missing Information", "Please enter the admin password.");
       return;
     }
 
     if (password !== ADMIN_PASSWORD) {
+      console.log("Password incorrect");
       Alert.alert("Access Denied", "Incorrect password. Please try again.");
       setPassword("");
       return;
     }
 
+    console.log("Password correct, proceeding with login...");
     setIsLoading(true);
     
     try {
-      console.log("Admin password correct, saving session...");
+      // Clear any existing session first
+      console.log("Clearing any existing session...");
+      await AsyncStorage.removeItem(ADMIN_SESSION_KEY);
       
-      // Save admin session with explicit await
+      // Add a small delay to ensure the removal completes
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Save new admin session
+      console.log("Saving new admin session...");
       await AsyncStorage.setItem(ADMIN_SESSION_KEY, "true");
       console.log("Admin session saved to AsyncStorage");
       
-      // Add a small delay to ensure AsyncStorage write completes on iOS
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Add a longer delay for iOS to ensure AsyncStorage write completes
+      if (Platform.OS === 'ios') {
+        console.log("iOS detected, adding extra delay...");
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
       
       // Verify the session was saved
       const verifySession = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
-      console.log("Verified admin session:", verifySession);
+      console.log("Verified admin session value:", verifySession);
       
       if (verifySession === "true") {
-        console.log("Session verified, navigating to admin dashboard...");
+        console.log("Session verified successfully!");
+        console.log("Navigating to admin dashboard...");
         
-        // Navigate to admin dashboard
-        router.replace("/(tabs)/adminDashboard");
-        
-        // Reset form state after navigation
+        // Reset form state before navigation
         setPassword("");
         setIsLoading(false);
+        
+        // Use push instead of replace to ensure proper navigation
+        router.push("/(tabs)/adminDashboard");
+        
+        console.log("Navigation command sent");
       } else {
+        console.error("Session verification failed - value:", verifySession);
         throw new Error("Session verification failed");
       }
     } catch (error) {
-      console.error("Error saving admin session:", error);
-      Alert.alert("Error", "Failed to save session. Please try again.");
+      console.error("=== Admin Login Error ===");
+      console.error("Error details:", error);
+      Alert.alert(
+        "Login Error", 
+        "Failed to save admin session. Please try again.\n\nError: " + (error instanceof Error ? error.message : String(error))
+      );
+      setPassword("");
       setIsLoading(false);
     }
   };
