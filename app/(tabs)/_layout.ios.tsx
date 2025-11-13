@@ -17,8 +17,8 @@ export default function TabLayout() {
         <Icon sf="doc.text.fill" />
         <Label>Job Request</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="profile" name="profile">
-        <Icon sf="person.fill" />
+      <NativeTabs.Trigger key="adminLogin" name="adminLogin">
+        <Icon sf="lock.shield.fill" />
         <Label>Admin</Label>
       </NativeTabs.Trigger>
     </NativeTabs>

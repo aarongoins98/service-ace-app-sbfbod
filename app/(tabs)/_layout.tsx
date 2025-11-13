@@ -26,9 +26,9 @@ export default function TabLayout() {
       label: 'Job Request',
     },
     {
-      name: 'profile',
-      route: '/(tabs)/profile',
-      icon: 'person',
+      name: 'adminLogin',
+      route: '/(tabs)/adminLogin',
+      icon: 'admin_panel_settings',
       label: 'Admin',
     },
   ];
@@ -46,9 +46,7 @@ export default function TabLayout() {
         <Stack.Screen key="home" name="(home)" />
         <Stack.Screen key="pricingTool" name="pricingTool" />
         <Stack.Screen key="jobRequestForm" name="jobRequestForm" />
-        <Stack.Screen key="profile" name="profile" />
-        <Stack.Screen key="login" name="login" options={{ animation: 'slide_from_right' }} />
-        <Stack.Screen key="adminLogin" name="adminLogin" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen key="adminLogin" name="adminLogin" />
         <Stack.Screen key="zipcodeEditor" name="zipcodeEditor" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen key="zipcodeAnalyzer" name="zipcodeAnalyzer" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen key="companyEditor" name="companyEditor" options={{ animation: 'slide_from_right' }} />
