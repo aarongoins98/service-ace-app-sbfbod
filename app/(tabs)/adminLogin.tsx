@@ -58,10 +58,10 @@ export default function AdminLoginScreen() {
       console.log("Verified admin session:", verifySession);
       
       if (verifySession === "true") {
-        console.log("Session verified, navigating to zipcode editor...");
+        console.log("Session verified, navigating to admin dashboard...");
         
-        // Navigate immediately without Alert
-        router.replace("/(tabs)/zipcodeEditor");
+        // Navigate to admin dashboard
+        router.replace("/(tabs)/adminDashboard");
         
         // Reset form state after navigation
         setPassword("");

@@ -258,68 +258,40 @@ export default function ZipcodeAnalyzerScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.headerBar}>
-        <View style={styles.headerLeft}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => router.push("/(tabs)/adminDashboard")}
+          activeOpacity={0.8}
+        >
+          <IconSymbol 
+            ios_icon_name="chevron.left" 
+            android_material_icon_name="chevron_left" 
+            size={24} 
+            color={colors.primary} 
+          />
+          <Text style={styles.backButtonText}>Dashboard</Text>
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
           <IconSymbol 
             ios_icon_name="chart.bar.fill" 
             android_material_icon_name="analytics" 
-            size={28} 
+            size={24} 
             color={colors.primary} 
           />
           <Text style={styles.headerTitle}>Zipcode Analyzer</Text>
         </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity 
-            style={styles.navButton} 
-            onPress={() => router.push("/(tabs)/companyEditor")}
-            activeOpacity={0.8}
-          >
-            <IconSymbol 
-              ios_icon_name="building.2.fill" 
-              android_material_icon_name="business" 
-              size={20} 
-              color={colors.primary} 
-            />
-            <Text style={styles.navButtonText}>Companies</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.navButton} 
-            onPress={() => router.push("/(tabs)/zipcodeEditor")}
-            activeOpacity={0.8}
-          >
-            <IconSymbol 
-              ios_icon_name="map.fill" 
-              android_material_icon_name="map" 
-              size={20} 
-              color={colors.primary} 
-            />
-            <Text style={styles.navButtonText}>Zipcodes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.navButton} 
-            onPress={() => router.push("/(tabs)/priceEditor")}
-            activeOpacity={0.8}
-          >
-            <IconSymbol 
-              ios_icon_name="dollarsign.circle.fill" 
-              android_material_icon_name="attach_money" 
-              size={20} 
-              color={colors.primary} 
-            />
-            <Text style={styles.navButtonText}>Prices</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.logoutButton} 
-            onPress={handleLogout}
-            activeOpacity={0.8}
-          >
-            <IconSymbol 
-              ios_icon_name="rectangle.portrait.and.arrow.right" 
-              android_material_icon_name="logout" 
-              size={20} 
-              color={colors.error} 
-            />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={styles.logoutButton} 
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <IconSymbol 
+            ios_icon_name="rectangle.portrait.and.arrow.right" 
+            android_material_icon_name="logout" 
+            size={20} 
+            color={colors.error} 
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -502,39 +474,36 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  headerLeft: {
+  backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  navButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
+    gap: 4,
     paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.primary,
   },
-  navButtonText: {
-    fontSize: 14,
+  backButtonText: {
+    fontSize: 16,
     fontWeight: '600',
     color: colors.primary,
   },
+  headerCenter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    pointerEvents: 'none',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
   logoutButton: {
     padding: 8,
+    borderRadius: 8,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingHorizontal: 24,
