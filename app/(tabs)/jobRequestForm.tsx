@@ -272,10 +272,13 @@ export default function JobRequestFormScreen() {
         preferredDate: preferredDate || "Not specified",
       },
       
-      companyInformation: {
+      // Updated to match Edge Function expectations
+      technicianInformation: {
+        fullName: submitterName,
         companyName: companyName,
         companyId: selectedCompanyId,
-        submittedBy: submitterName,
+        phoneNumber: "N/A", // Not collected in form
+        email: "N/A", // Not collected in form
       },
       
       metadata: {
@@ -321,6 +324,7 @@ export default function JobRequestFormScreen() {
       }
 
       try {
+        console.log('Sending email via Supabase Edge Function...');
         const emailResponse = await fetch(
           `${SUPABASE_URL}/functions/v1/send-job-request-email`,
           {
@@ -338,9 +342,11 @@ export default function JobRequestFormScreen() {
         console.log("OK:", emailResponse.ok);
 
         if (!emailResponse.ok) {
-          console.error('❌ Error sending email');
+          const errorText = await emailResponse.text();
+          console.error('❌ Error sending email. Response:', errorText);
         } else {
-          console.log('✅ Email sent successfully');
+          const responseData = await emailResponse.json();
+          console.log('✅ Email sent successfully:', responseData);
           emailSuccess = true;
         }
       } catch (emailError) {
