@@ -44,30 +44,28 @@ export default function AdminLoginScreen() {
     setIsLoading(true);
     
     try {
+      console.log("Admin password correct, saving session...");
+      
       // Save admin session with explicit await
       await AsyncStorage.setItem(ADMIN_SESSION_KEY, "true");
       console.log("Admin session saved to AsyncStorage");
       
-      // Verify the session was saved (iOS-specific fix)
+      // Add a small delay to ensure AsyncStorage write completes on iOS
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Verify the session was saved
       const verifySession = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
       console.log("Verified admin session:", verifySession);
       
       if (verifySession === "true") {
-        // Show success message before navigation
-        Alert.alert(
-          "Success", 
-          "Welcome, Admin!",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                // Navigate after user acknowledges
-                console.log("Navigating to zipcode editor");
-                router.replace("/(tabs)/zipcodeEditor");
-              }
-            }
-          ]
-        );
+        console.log("Session verified, navigating to zipcode editor...");
+        
+        // Navigate immediately without Alert
+        router.replace("/(tabs)/zipcodeEditor");
+        
+        // Reset form state after navigation
+        setPassword("");
+        setIsLoading(false);
       } else {
         throw new Error("Session verification failed");
       }
@@ -97,7 +95,7 @@ export default function AdminLoginScreen() {
             />
             <Text style={styles.title}>Admin Login</Text>
             <Text style={styles.subtitle}>
-              Enter admin password to access zipcode management
+              Enter admin password to access management tools
             </Text>
           </View>
 
@@ -138,7 +136,7 @@ export default function AdminLoginScreen() {
               color={colors.secondary} 
             />
             <Text style={styles.infoText}>
-              Admin access is required to manage zipcode charges for the pricing tool.
+              Admin access is required to manage zipcodes, companies, and pricing for the services.
             </Text>
           </View>
         </ScrollView>
