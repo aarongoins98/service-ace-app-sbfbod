@@ -59,22 +59,13 @@ const ADMIN_OPTIONS: AdminOption[] = [
     color: '#10b981',
   },
   {
-    id: 'services',
-    title: 'Services Manager',
-    description: 'Add, hide, or delete additional services',
-    route: '/(tabs)/servicesEditor',
-    iosIcon: 'wrench.and.screwdriver.fill',
-    androidIcon: 'build',
-    color: '#f59e0b',
-  },
-  {
     id: 'analyzer',
     title: 'Zipcode Analyzer',
     description: 'Analyze zipcode coverage by county',
     route: '/(tabs)/zipcodeAnalyzer',
     iosIcon: 'chart.bar.fill',
     androidIcon: 'analytics',
-    color: '#ec4899',
+    color: '#f59e0b',
   },
 ];
 
@@ -208,7 +199,7 @@ export default function AdminDashboardScreen() {
           />
           <Text style={styles.welcomeTitle}>Welcome to Admin Tools</Text>
           <Text style={styles.welcomeDescription}>
-            Manage your pricing, zipcodes, companies, services, and analyze coverage from one central location.
+            Manage your pricing, zipcodes, companies, and analyze coverage from one central location.
           </Text>
         </View>
 
@@ -257,7 +248,6 @@ export default function AdminDashboardScreen() {
               - Use Zipcode Manager to add or update service area charges{'\n'}
               - Company Manager controls the dropdown in job request forms{'\n'}
               - Price Editor updates base pricing for all quotes{'\n'}
-              - Services Manager lets you add, hide, or delete add-on services{'\n'}
               - Zipcode Analyzer helps identify coverage gaps
             </Text>
           </View>
