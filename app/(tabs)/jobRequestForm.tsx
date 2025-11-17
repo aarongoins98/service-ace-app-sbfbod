@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   Image,
   Modal,
-  Pressable,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
@@ -25,11 +24,6 @@ import { supabase } from "@/app/integrations/supabase/client";
 const ZAPIER_WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/25340159/u8h7rt7/";
 const SUPABASE_URL = "https://vvqlpbydvugqrbeftckc.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2cWxwYnlkdnVncXJiZWZ0Y2tjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5MTU1OTksImV4cCI6MjA3ODQ5MTU5OX0.qo3MERO4p1H7eLpkV5_OiWMBM1OdbFKpw-10wo8rIuU";
-
-interface Company {
-  id: string;
-  name: string;
-}
 
 interface AddOnService {
   id: string;
@@ -47,13 +41,8 @@ export default function JobRequestFormScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
   
-  // Company Selection
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [isLoadingCompanies, setIsLoadingCompanies] = useState(true);
+  // Company Name (simple text field)
   const [companyName, setCompanyName] = useState("");
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
-  const [showCompanyPicker, setShowCompanyPicker] = useState(false);
-  const [companySearchQuery, setCompanySearchQuery] = useState("");
   
   // Submitter Information
   const [submitterName, setSubmitterName] = useState("");
@@ -84,34 +73,8 @@ export default function JobRequestFormScreen() {
   const [addOnServices, setAddOnServices] = useState<AddOnService[]>([]);
 
   useEffect(() => {
-    loadCompanies();
     loadAddOnServices();
   }, []);
-
-  const loadCompanies = async () => {
-    try {
-      console.log("Loading companies from Supabase...");
-      setIsLoadingCompanies(true);
-      const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) {
-        console.error("Error loading companies:", error);
-        Alert.alert("Error", "Failed to load company list. Please try again.");
-        return;
-      }
-
-      setCompanies(data || []);
-      console.log(`Loaded ${data?.length || 0} companies successfully`);
-    } catch (error) {
-      console.error("Exception while loading companies:", error);
-      Alert.alert("Error", "An error occurred while loading companies.");
-    } finally {
-      setIsLoadingCompanies(false);
-    }
-  };
 
   const loadAddOnServices = async () => {
     try {
@@ -192,10 +155,6 @@ export default function JobRequestFormScreen() {
     return icons[serviceName] || { ios: 'plus.circle', android: 'add_circle' };
   };
 
-  const filteredCompanies = companies.filter((company) =>
-    company.name.toLowerCase().includes(companySearchQuery.toLowerCase())
-  );
-
   const capitalizeFirstLetter = (text: string): string => {
     if (!text) return text;
     return text.charAt(0).toUpperCase() + text.slice(1);
@@ -266,25 +225,6 @@ export default function JobRequestFormScreen() {
     return digits.length === 10;
   };
 
-  const handleOpenCompanyPicker = () => {
-    console.log("Opening company picker");
-    setCompanySearchQuery("");
-    setShowCompanyPicker(true);
-  };
-
-  const handleCloseCompanyPicker = () => {
-    console.log("Closing company picker");
-    setShowCompanyPicker(false);
-    setCompanySearchQuery("");
-  };
-
-  const handleSelectCompany = (company: Company) => {
-    console.log("Selected company:", company.name);
-    setCompanyName(company.name);
-    setSelectedCompanyId(company.id);
-    handleCloseCompanyPicker();
-  };
-
   const handleSubmit = async () => {
     console.log("=== JOB REQUEST SUBMISSION STARTED ===");
     console.log("Timestamp:", new Date().toISOString());
@@ -294,6 +234,13 @@ export default function JobRequestFormScreen() {
         !phone || !email || !streetAddress || !city || !state || !zipcode) {
       console.log("ERROR: Missing required fields");
       Alert.alert("Missing Information", "Please fill in all required fields. Job Description and Preferred Date are optional.");
+      return;
+    }
+
+    // Validate company name is not empty or just whitespace
+    if (companyName.trim().length === 0) {
+      console.log("ERROR: Company name is empty");
+      Alert.alert("Missing Information", "Please enter a company name.");
       return;
     }
 
@@ -379,8 +326,8 @@ export default function JobRequestFormScreen() {
       
       technicianInformation: {
         fullName: submitterName,
-        companyName: companyName,
-        companyId: selectedCompanyId,
+        companyName: companyName.trim(),
+        companyId: null,
         phoneNumber: "N/A",
         email: "N/A",
       },
@@ -484,7 +431,6 @@ export default function JobRequestFormScreen() {
   const resetForm = () => {
     console.log("Resetting form");
     setCompanyName("");
-    setSelectedCompanyId("");
     setSubmitterName("");
     setSquareFootage("");
     setHvacSystems("");
@@ -530,28 +476,16 @@ export default function JobRequestFormScreen() {
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Company Name *</Text>
-            {isLoadingCompanies ? (
-              <View style={styles.loadingPicker}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={styles.loadingText}>Loading companies...</Text>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.pickerButton}
-                onPress={handleOpenCompanyPicker}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.pickerButtonText, !companyName && styles.pickerPlaceholder]}>
-                  {companyName || "Select a company"}
-                </Text>
-                <IconSymbol 
-                  ios_icon_name="chevron.down" 
-                  android_material_icon_name="arrow_drop_down" 
-                  size={20} 
-                  color={colors.textSecondary} 
-                />
-              </TouchableOpacity>
-            )}
+            <TextInput
+              style={styles.input}
+              placeholder="Enter company name"
+              placeholderTextColor={colors.textSecondary}
+              value={companyName}
+              onChangeText={setCompanyName}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              editable={!isSubmitting}
+            />
           </View>
 
           <View style={styles.inputGroup}>
@@ -970,137 +904,6 @@ export default function JobRequestFormScreen() {
         </View>
       </ScrollView>
 
-      {/* Company Picker Modal */}
-      <Modal
-        visible={showCompanyPicker}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={handleCloseCompanyPicker}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable 
-            style={styles.modalOverlayTouchable}
-            onPress={handleCloseCompanyPicker}
-          />
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Company</Text>
-              <Pressable 
-                onPress={handleCloseCompanyPicker}
-                style={styles.modalCloseButton}
-              >
-                <IconSymbol 
-                  ios_icon_name="xmark.circle.fill" 
-                  android_material_icon_name="cancel" 
-                  size={28} 
-                  color={colors.textSecondary} 
-                />
-              </Pressable>
-            </View>
-            
-            <View style={styles.searchContainer}>
-              <IconSymbol 
-                ios_icon_name="magnifyingglass" 
-                android_material_icon_name="search" 
-                size={20} 
-                color={colors.textSecondary} 
-              />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search companies..."
-                placeholderTextColor={colors.textSecondary}
-                value={companySearchQuery}
-                onChangeText={setCompanySearchQuery}
-                autoFocus={true}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {companySearchQuery.length > 0 && (
-                <Pressable 
-                  onPress={() => setCompanySearchQuery("")}
-                  style={styles.clearSearchButton}
-                >
-                  <IconSymbol 
-                    ios_icon_name="xmark.circle.fill" 
-                    android_material_icon_name="cancel" 
-                    size={20} 
-                    color={colors.textSecondary} 
-                  />
-                </Pressable>
-              )}
-            </View>
-
-            <ScrollView 
-              style={styles.modalList}
-              keyboardShouldPersistTaps="always"
-            >
-              {filteredCompanies.length === 0 ? (
-                <View style={styles.emptyCompanies}>
-                  <IconSymbol 
-                    ios_icon_name={companySearchQuery ? "magnifyingglass" : "building.2"} 
-                    android_material_icon_name={companySearchQuery ? "search_off" : "business"} 
-                    size={48} 
-                    color={colors.textSecondary} 
-                  />
-                  <Text style={styles.emptyText}>
-                    {companySearchQuery ? "No companies found" : "No companies available"}
-                  </Text>
-                  <Text style={styles.emptySubtext}>
-                    {companySearchQuery 
-                      ? `No results for "${companySearchQuery}"`
-                      : "Contact your administrator to add companies"
-                    }
-                  </Text>
-                </View>
-              ) : (
-                <React.Fragment>
-                  {filteredCompanies.map((company) => (
-                    <Pressable
-                      key={company.id}
-                      style={({ pressed }) => [
-                        styles.companyOption,
-                        companyName === company.name && styles.companyOptionSelected,
-                        pressed && styles.companyOptionPressed
-                      ]}
-                      onPress={() => handleSelectCompany(company)}
-                    >
-                      <IconSymbol 
-                        ios_icon_name="building.2.fill" 
-                        android_material_icon_name="business" 
-                        size={20} 
-                        color={companyName === company.name ? colors.primary : colors.textSecondary} 
-                      />
-                      <Text style={[
-                        styles.companyOptionText,
-                        companyName === company.name && styles.companyOptionTextSelected
-                      ]}>
-                        {company.name}
-                      </Text>
-                      {companyName === company.name && (
-                        <IconSymbol 
-                          ios_icon_name="checkmark.circle.fill" 
-                          android_material_icon_name="check_circle" 
-                          size={24} 
-                          color={colors.primary} 
-                        />
-                      )}
-                    </Pressable>
-                  ))}
-                </React.Fragment>
-              )}
-            </ScrollView>
-
-            {companySearchQuery.length > 0 && filteredCompanies.length > 0 && (
-              <View style={styles.resultsCount}>
-                <Text style={styles.resultsCountText}>
-                  {filteredCompanies.length} {filteredCompanies.length === 1 ? 'company' : 'companies'} found
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </Modal>
-
       {/* Thank You Modal */}
       <Modal
         visible={showThankYouModal}
@@ -1383,37 +1186,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     marginVertical: 24,
   },
-  loadingPicker: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
-  pickerButton: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  pickerButtonText: {
-    fontSize: 16,
-    color: colors.text,
-  },
-  pickerPlaceholder: {
-    color: colors.textSecondary,
-  },
   submitButton: {
     backgroundColor: colors.secondary,
     borderRadius: 8,
@@ -1453,120 +1225,8 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalOverlayTouchable: {
-    flex: 1,
-  },
-  modalContent: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  modalCloseButton: {
-    padding: 4,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginHorizontal: 20,
-    marginTop: 16,
-    marginBottom: 12,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.text,
-    padding: 0,
-  },
-  clearSearchButton: {
-    padding: 4,
-  },
-  modalList: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  companyOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  companyOptionPressed: {
-    opacity: 0.7,
-  },
-  companyOptionSelected: {
-    backgroundColor: colors.background,
-    borderColor: colors.primary,
-    borderWidth: 2,
-  },
-  companyOptionText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.text,
-  },
-  companyOptionTextSelected: {
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  emptyCompanies: {
-    alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-    gap: 12,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  resultsCount: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  resultsCountText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.textSecondary,
-    textAlign: 'center',
+    alignItems: 'center',
   },
   thankYouModalContent: {
     backgroundColor: colors.card,
