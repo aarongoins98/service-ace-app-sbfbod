@@ -442,11 +442,10 @@ export default function PricingToolScreen() {
           {addOnServices.length > 0 && (
             <View style={styles.addOnsSection}>
               <Text style={styles.addOnsTitle}>Additional Services (Optional)</Text>
-              <Text style={styles.addOnsSubtitle}>Select any additional services to include in the quote</Text>
+              <Text style={styles.addOnsSubtitle}>Select any additional services and specify quantity</Text>
               
               {addOnServices.map((service) => {
                 const icon = getAddOnIcon(service.service_name);
-                const needsQuantity = service.service_name === 'anti_microbial_fogging';
                 
                 return (
                   <View key={service.id} style={styles.addOnItem}>
@@ -484,14 +483,14 @@ export default function PricingToolScreen() {
                           </Text>
                         </View>
                         <Text style={styles.addOnPrice}>
-                          ${service.price.toFixed(2)}{needsQuantity ? ' per system' : ''}
+                          ${service.price.toFixed(2)} each
                         </Text>
                       </View>
                     </TouchableOpacity>
                     
-                    {service.enabled && needsQuantity && (
+                    {service.enabled && (
                       <View style={styles.quantityContainer}>
-                        <Text style={styles.quantityLabel}>Systems:</Text>
+                        <Text style={styles.quantityLabel}>Quantity:</Text>
                         <View style={styles.quantityControls}>
                           <TouchableOpacity 
                             style={styles.quantityButton}
@@ -519,6 +518,9 @@ export default function PricingToolScreen() {
                             />
                           </TouchableOpacity>
                         </View>
+                        <Text style={styles.quantityTotal}>
+                          Total: ${(service.price * service.quantity).toFixed(2)}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -733,7 +735,7 @@ export default function PricingToolScreen() {
               - Location-based zipcode charges (loaded from database)
             </Text>
             <Text style={styles.infoText}>
-              - Optional add-on services (Dryer Vent, Anti-Microbial Fogging, etc.)
+              - Optional add-on services with customizable quantities
             </Text>
             <Text style={styles.infoText}>
               - 20% Partner Discount automatically applied
@@ -907,7 +909,7 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
@@ -917,7 +919,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
-    marginRight: 12,
   },
   quantityControls: {
     flexDirection: 'row',
@@ -940,6 +941,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     minWidth: 24,
     textAlign: 'center',
+  },
+  quantityTotal: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.primary,
   },
   calculateButton: {
     backgroundColor: colors.primary,

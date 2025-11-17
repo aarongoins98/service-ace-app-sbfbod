@@ -31,6 +31,15 @@ interface Company {
   name: string;
 }
 
+interface AddOnService {
+  id: string;
+  service_name: string;
+  price: number;
+  description: string;
+  enabled: boolean;
+  quantity: number;
+}
+
 export default function JobRequestFormScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -46,7 +55,7 @@ export default function JobRequestFormScreen() {
   const [showCompanyPicker, setShowCompanyPicker] = useState(false);
   const [companySearchQuery, setCompanySearchQuery] = useState("");
   
-  // Submitter Information (NEW)
+  // Submitter Information
   const [submitterName, setSubmitterName] = useState("");
   
   // Property Information
@@ -71,8 +80,12 @@ export default function JobRequestFormScreen() {
   const [jobDescription, setJobDescription] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
 
+  // Add-On Services
+  const [addOnServices, setAddOnServices] = useState<AddOnService[]>([]);
+
   useEffect(() => {
     loadCompanies();
+    loadAddOnServices();
   }, []);
 
   const loadCompanies = async () => {
@@ -98,6 +111,85 @@ export default function JobRequestFormScreen() {
     } finally {
       setIsLoadingCompanies(false);
     }
+  };
+
+  const loadAddOnServices = async () => {
+    try {
+      console.log("Loading add-on services from Supabase...");
+      
+      const { data, error } = await supabase
+        .from('service_prices')
+        .select('*')
+        .in('service_name', [
+          'dryer_vent',
+          'anti_microbial_fogging',
+          'evap_coil_cleaning',
+          'outdoor_coil_cleaning',
+          'bathroom_fan_cleaning'
+        ]);
+
+      if (error) {
+        console.error("Error loading add-on services:", error);
+        return;
+      }
+
+      const services: AddOnService[] = (data || []).map(item => ({
+        id: item.id,
+        service_name: item.service_name,
+        price: parseFloat(item.price),
+        description: item.description,
+        enabled: false,
+        quantity: 1,
+      }));
+
+      setAddOnServices(services);
+      console.log(`Loaded ${services.length} add-on services`);
+    } catch (error) {
+      console.error("Error loading add-on services:", error);
+    }
+  };
+
+  const toggleAddOn = (serviceId: string) => {
+    setAddOnServices(prev => 
+      prev.map(service => 
+        service.id === serviceId 
+          ? { ...service, enabled: !service.enabled }
+          : service
+      )
+    );
+  };
+
+  const updateAddOnQuantity = (serviceId: string, quantity: number) => {
+    if (quantity < 1) return;
+    setAddOnServices(prev => 
+      prev.map(service => 
+        service.id === serviceId 
+          ? { ...service, quantity }
+          : service
+      )
+    );
+  };
+
+  const getAddOnDisplayName = (serviceName: string): string => {
+    const names: { [key: string]: string } = {
+      'dryer_vent': 'Dryer Vent',
+      'anti_microbial_fogging': 'Anti-Microbial Fogging',
+      'evap_coil_cleaning': 'In-place Evap Coil Cleaning',
+      'outdoor_coil_cleaning': 'Outdoor Coil Cleaning',
+      'bathroom_fan_cleaning': 'Bathroom Fan Cleaning',
+    };
+    return names[serviceName] || serviceName;
+  };
+
+  const getAddOnIcon = (serviceName: string): { ios: string; android: string } => {
+    const icons: { [key: string]: { ios: string; android: string } } = {
+      'dryer_vent': { ios: 'wind', android: 'air' },
+      'anti_microbial_fogging': { ios: 'sparkles', android: 'auto_awesome' },
+      'evap_coil_cleaning': { ios: 'snowflake', android: 'ac_unit' },
+      'outdoor_coil_cleaning': { ios: 'fan.fill', android: 'hvac' },
+      'bathroom_fan_cleaning': { ios: 'fan.badge.automatic', android: 'mode_fan' },
+    };
+    return icons[serviceName] || { ios: 'plus.circle', android: 'add_circle' };
   };
 
   const filteredCompanies = companies.filter((company) =>
@@ -197,7 +289,7 @@ export default function JobRequestFormScreen() {
     console.log("=== JOB REQUEST SUBMISSION STARTED ===");
     console.log("Timestamp:", new Date().toISOString());
 
-    // Validate all required inputs (including new submitterName field)
+    // Validate all required inputs
     if (!companyName || !submitterName || !squareFootage || !hvacSystems || !customerFirstName || !customerLastName || 
         !phone || !email || !streetAddress || !city || !state || !zipcode) {
       console.log("ERROR: Missing required fields");
@@ -243,6 +335,17 @@ export default function JobRequestFormScreen() {
 
     console.log("All validations passed");
 
+    // Prepare add-on services data
+    const selectedAddOns = addOnServices
+      .filter(service => service.enabled)
+      .map(service => ({
+        serviceName: getAddOnDisplayName(service.service_name),
+        serviceId: service.service_name,
+        quantity: service.quantity,
+        pricePerUnit: service.price,
+        totalPrice: service.price * service.quantity,
+      }));
+
     const jobData = {
       propertyInformation: {
         squareFootage: sqFt,
@@ -272,13 +375,14 @@ export default function JobRequestFormScreen() {
         preferredDate: preferredDate || "Not specified",
       },
       
-      // Updated to match Edge Function expectations
+      addOnServices: selectedAddOns,
+      
       technicianInformation: {
         fullName: submitterName,
         companyName: companyName,
         companyId: selectedCompanyId,
-        phoneNumber: "N/A", // Not collected in form
-        email: "N/A", // Not collected in form
+        phoneNumber: "N/A",
+        email: "N/A",
       },
       
       metadata: {
@@ -396,6 +500,7 @@ export default function JobRequestFormScreen() {
     setZipcode("");
     setJobDescription("");
     setPreferredDate("");
+    setAddOnServices(prev => prev.map(service => ({ ...service, enabled: false, quantity: 1 })));
     setShowThankYouModal(false);
   };
 
@@ -538,6 +643,100 @@ export default function JobRequestFormScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Add-On Services Section */}
+          {addOnServices.length > 0 && (
+            <View style={styles.addOnsSection}>
+              <Text style={styles.addOnsTitle}>Additional Services (Optional)</Text>
+              <Text style={styles.addOnsSubtitle}>Select any additional services and specify quantity</Text>
+              
+              {addOnServices.map((service) => {
+                const icon = getAddOnIcon(service.service_name);
+                
+                return (
+                  <View key={service.id} style={styles.addOnItem}>
+                    <TouchableOpacity 
+                      style={styles.addOnCheckbox}
+                      onPress={() => toggleAddOn(service.id)}
+                      activeOpacity={0.7}
+                      disabled={isSubmitting}
+                    >
+                      <View style={[
+                        styles.checkbox,
+                        service.enabled && styles.checkboxChecked
+                      ]}>
+                        {service.enabled && (
+                          <IconSymbol 
+                            ios_icon_name="checkmark" 
+                            android_material_icon_name="check" 
+                            size={16} 
+                            color="#ffffff" 
+                          />
+                        )}
+                      </View>
+                      <View style={styles.addOnInfo}>
+                        <View style={styles.addOnHeader}>
+                          <IconSymbol 
+                            ios_icon_name={icon.ios} 
+                            android_material_icon_name={icon.android} 
+                            size={20} 
+                            color={service.enabled ? colors.primary : colors.textSecondary} 
+                          />
+                          <Text style={[
+                            styles.addOnName,
+                            service.enabled && styles.addOnNameActive
+                          ]}>
+                            {getAddOnDisplayName(service.service_name)}
+                          </Text>
+                        </View>
+                        <Text style={styles.addOnPrice}>
+                          ${service.price.toFixed(2)} each
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    {service.enabled && (
+                      <View style={styles.quantityContainer}>
+                        <Text style={styles.quantityLabel}>Quantity:</Text>
+                        <View style={styles.quantityControls}>
+                          <TouchableOpacity 
+                            style={styles.quantityButton}
+                            onPress={() => updateAddOnQuantity(service.id, service.quantity - 1)}
+                            activeOpacity={0.7}
+                            disabled={isSubmitting}
+                          >
+                            <IconSymbol 
+                              ios_icon_name="minus" 
+                              android_material_icon_name="remove" 
+                              size={16} 
+                              color={colors.primary} 
+                            />
+                          </TouchableOpacity>
+                          <Text style={styles.quantityValue}>{service.quantity}</Text>
+                          <TouchableOpacity 
+                            style={styles.quantityButton}
+                            onPress={() => updateAddOnQuantity(service.id, service.quantity + 1)}
+                            activeOpacity={0.7}
+                            disabled={isSubmitting}
+                          >
+                            <IconSymbol 
+                              ios_icon_name="plus" 
+                              android_material_icon_name="add" 
+                              size={16} 
+                              color={colors.primary} 
+                            />
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={styles.quantityTotal}>
+                          Total: ${(service.price * service.quantity).toFixed(2)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
           <View style={styles.divider} />
 
@@ -1081,6 +1280,103 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
     fontWeight: '500',
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  addOnsSection: {
+    marginBottom: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  addOnsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  addOnsSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 16,
+  },
+  addOnItem: {
+    marginBottom: 12,
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  addOnCheckbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  addOnInfo: {
+    flex: 1,
+  },
+  addOnHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  addOnName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  addOnNameActive: {
+    color: colors.text,
+  },
+  addOnPrice: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginLeft: 28,
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  quantityLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  quantityButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  quantityTotal: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.primary,
   },
   divider: {
     height: 1,
