@@ -132,6 +132,11 @@ export default function PriceEditorScreen() {
       'duct_clean_seal_per_hvac': 'Clean & Seal Per HVAC System',
       'hvac_system_charge': 'Additional HVAC System Charge',
       'partner_discount_percent': 'Partner Discount Percentage',
+      'dryer_vent': 'Dryer Vent Cleaning',
+      'anti_microbial_fogging': 'Anti-Microbial Fogging',
+      'evap_coil_cleaning': 'In-place Evap Coil Cleaning',
+      'outdoor_coil_cleaning': 'Outdoor Coil Cleaning',
+      'bathroom_fan_cleaning': 'Bathroom Fan Cleaning',
     };
     return names[serviceName] || serviceName;
   };
@@ -143,8 +148,21 @@ export default function PriceEditorScreen() {
       'duct_clean_seal_per_hvac': { ios: 'fan.fill', android: 'ac_unit' },
       'hvac_system_charge': { ios: 'plus.circle.fill', android: 'add_circle' },
       'partner_discount_percent': { ios: 'tag.fill', android: 'local_offer' },
+      'dryer_vent': { ios: 'wind', android: 'air' },
+      'anti_microbial_fogging': { ios: 'sparkles', android: 'auto_awesome' },
+      'evap_coil_cleaning': { ios: 'snowflake', android: 'ac_unit' },
+      'outdoor_coil_cleaning': { ios: 'fan.fill', android: 'hvac' },
+      'bathroom_fan_cleaning': { ios: 'fan.badge.automatic', android: 'mode_fan' },
     };
     return icons[serviceName] || { ios: 'dollarsign.circle', android: 'attach_money' };
+  };
+
+  const getCategory = (serviceName: string): string => {
+    const addOnServices = ['dryer_vent', 'anti_microbial_fogging', 'evap_coil_cleaning', 'outdoor_coil_cleaning', 'bathroom_fan_cleaning'];
+    if (addOnServices.includes(serviceName)) {
+      return 'Add-On Services';
+    }
+    return 'Base Pricing';
   };
 
   const handleLogout = async () => {
@@ -170,6 +188,10 @@ export default function PriceEditorScreen() {
       </SafeAreaView>
     );
   }
+
+  // Group prices by category
+  const basePrices = prices.filter(p => getCategory(p.service_name) === 'Base Pricing');
+  const addOnPrices = prices.filter(p => getCategory(p.service_name) === 'Add-On Services');
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -230,7 +252,7 @@ export default function PriceEditorScreen() {
             <View style={styles.infoTextContainer}>
               <Text style={styles.infoTitle}>Service Pricing Configuration</Text>
               <Text style={styles.infoText}>
-                Update the base prices for duct cleaning and duct clean & seal services. These prices are used in the Pricing Tool to generate customer quotes.
+                Update the base prices for duct cleaning, duct clean & seal services, and add-on services. These prices are used in the Pricing Tool to generate customer quotes.
               </Text>
             </View>
           </View>
@@ -242,110 +264,232 @@ export default function PriceEditorScreen() {
               <Text style={styles.loadingText}>Loading prices...</Text>
             </View>
           ) : (
-            <View style={styles.listContainer}>
-              {prices.map((priceItem) => {
-                const icon = getIcon(priceItem.service_name);
-                const isPercent = priceItem.service_name.includes('percent');
-                
-                return (
-                  <View key={priceItem.id} style={styles.priceCard}>
-                    <View style={styles.priceHeader}>
-                      <View style={styles.priceIconContainer}>
-                        <IconSymbol 
-                          ios_icon_name={icon.ios} 
-                          android_material_icon_name={icon.android} 
-                          size={24} 
-                          color={colors.primary} 
-                        />
-                      </View>
-                      <View style={styles.priceInfo}>
-                        <Text style={styles.priceName}>
-                          {getDisplayName(priceItem.service_name)}
-                        </Text>
-                        <Text style={styles.priceDescription}>
-                          {priceItem.description}
-                        </Text>
-                      </View>
-                    </View>
+            <React.Fragment>
+              {/* Base Pricing Section */}
+              {basePrices.length > 0 && (
+                <View style={styles.categorySection}>
+                  <Text style={styles.categoryTitle}>Base Pricing</Text>
+                  <View style={styles.listContainer}>
+                    {basePrices.map((priceItem) => {
+                      const icon = getIcon(priceItem.service_name);
+                      const isPercent = priceItem.service_name.includes('percent');
+                      
+                      return (
+                        <View key={priceItem.id} style={styles.priceCard}>
+                          <View style={styles.priceHeader}>
+                            <View style={styles.priceIconContainer}>
+                              <IconSymbol 
+                                ios_icon_name={icon.ios} 
+                                android_material_icon_name={icon.android} 
+                                size={24} 
+                                color={colors.primary} 
+                              />
+                            </View>
+                            <View style={styles.priceInfo}>
+                              <Text style={styles.priceName}>
+                                {getDisplayName(priceItem.service_name)}
+                              </Text>
+                              <Text style={styles.priceDescription}>
+                                {priceItem.description}
+                              </Text>
+                            </View>
+                          </View>
 
-                    {editingId === priceItem.id ? (
-                      <View style={styles.editForm}>
-                        <View style={styles.editInputContainer}>
-                          <Text style={styles.currencySymbol}>
-                            {isPercent ? '' : '$'}
-                          </Text>
-                          <TextInput
-                            style={styles.editInput}
-                            value={editPrice}
-                            onChangeText={setEditPrice}
-                            keyboardType="numeric"
-                            autoFocus
-                            placeholder="0"
-                            placeholderTextColor={colors.textSecondary}
-                          />
-                          <Text style={styles.percentSymbol}>
-                            {isPercent ? '%' : ''}
-                          </Text>
+                          {editingId === priceItem.id ? (
+                            <View style={styles.editForm}>
+                              <View style={styles.editInputContainer}>
+                                <Text style={styles.currencySymbol}>
+                                  {isPercent ? '' : '$'}
+                                </Text>
+                                <TextInput
+                                  style={styles.editInput}
+                                  value={editPrice}
+                                  onChangeText={setEditPrice}
+                                  keyboardType="numeric"
+                                  autoFocus
+                                  placeholder="0"
+                                  placeholderTextColor={colors.textSecondary}
+                                />
+                                <Text style={styles.percentSymbol}>
+                                  {isPercent ? '%' : ''}
+                                </Text>
+                              </View>
+                              <View style={styles.editActions}>
+                                <TouchableOpacity 
+                                  style={styles.saveButton}
+                                  onPress={() => handleUpdatePrice(priceItem.id, priceItem.service_name)}
+                                  activeOpacity={0.8}
+                                >
+                                  <IconSymbol 
+                                    ios_icon_name="checkmark.circle.fill" 
+                                    android_material_icon_name="check_circle" 
+                                    size={28} 
+                                    color="#22c55e" 
+                                  />
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                  style={styles.cancelButton}
+                                  onPress={() => {
+                                    setEditingId(null);
+                                    setEditPrice("");
+                                  }}
+                                  activeOpacity={0.8}
+                                >
+                                  <IconSymbol 
+                                    ios_icon_name="xmark.circle.fill" 
+                                    android_material_icon_name="cancel" 
+                                    size={28} 
+                                    color={colors.textSecondary} 
+                                  />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          ) : (
+                            <View style={styles.priceRow}>
+                              <View style={styles.priceValueContainer}>
+                                <Text style={styles.priceValue}>
+                                  {isPercent ? `${priceItem.price}%` : `$${priceItem.price.toFixed(2)}`}
+                                </Text>
+                              </View>
+                              <TouchableOpacity 
+                                style={styles.editButton}
+                                onPress={() => {
+                                  setEditingId(priceItem.id);
+                                  setEditPrice(priceItem.price.toString());
+                                }}
+                                activeOpacity={0.8}
+                              >
+                                <IconSymbol 
+                                  ios_icon_name="pencil.circle.fill" 
+                                  android_material_icon_name="edit" 
+                                  size={28} 
+                                  color={colors.primary} 
+                                />
+                                <Text style={styles.editButtonText}>Edit</Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
                         </View>
-                        <View style={styles.editActions}>
-                          <TouchableOpacity 
-                            style={styles.saveButton}
-                            onPress={() => handleUpdatePrice(priceItem.id, priceItem.service_name)}
-                            activeOpacity={0.8}
-                          >
-                            <IconSymbol 
-                              ios_icon_name="checkmark.circle.fill" 
-                              android_material_icon_name="check_circle" 
-                              size={28} 
-                              color="#22c55e" 
-                            />
-                          </TouchableOpacity>
-                          <TouchableOpacity 
-                            style={styles.cancelButton}
-                            onPress={() => {
-                              setEditingId(null);
-                              setEditPrice("");
-                            }}
-                            activeOpacity={0.8}
-                          >
-                            <IconSymbol 
-                              ios_icon_name="xmark.circle.fill" 
-                              android_material_icon_name="cancel" 
-                              size={28} 
-                              color={colors.textSecondary} 
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
-                      <View style={styles.priceRow}>
-                        <View style={styles.priceValueContainer}>
-                          <Text style={styles.priceValue}>
-                            {isPercent ? `${priceItem.price}%` : `$${priceItem.price.toFixed(2)}`}
-                          </Text>
-                        </View>
-                        <TouchableOpacity 
-                          style={styles.editButton}
-                          onPress={() => {
-                            setEditingId(priceItem.id);
-                            setEditPrice(priceItem.price.toString());
-                          }}
-                          activeOpacity={0.8}
-                        >
-                          <IconSymbol 
-                            ios_icon_name="pencil.circle.fill" 
-                            android_material_icon_name="edit" 
-                            size={28} 
-                            color={colors.primary} 
-                          />
-                          <Text style={styles.editButtonText}>Edit</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
+                      );
+                    })}
                   </View>
-                );
-              })}
-            </View>
+                </View>
+              )}
+
+              {/* Add-On Services Section */}
+              {addOnPrices.length > 0 && (
+                <View style={styles.categorySection}>
+                  <Text style={styles.categoryTitle}>Add-On Services</Text>
+                  <Text style={styles.categorySubtitle}>
+                    Optional services that can be added to any quote
+                  </Text>
+                  <View style={styles.listContainer}>
+                    {addOnPrices.map((priceItem) => {
+                      const icon = getIcon(priceItem.service_name);
+                      const isPercent = priceItem.service_name.includes('percent');
+                      
+                      return (
+                        <View key={priceItem.id} style={styles.priceCard}>
+                          <View style={styles.priceHeader}>
+                            <View style={styles.priceIconContainer}>
+                              <IconSymbol 
+                                ios_icon_name={icon.ios} 
+                                android_material_icon_name={icon.android} 
+                                size={24} 
+                                color={colors.accent} 
+                              />
+                            </View>
+                            <View style={styles.priceInfo}>
+                              <Text style={styles.priceName}>
+                                {getDisplayName(priceItem.service_name)}
+                              </Text>
+                              <Text style={styles.priceDescription}>
+                                {priceItem.description}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {editingId === priceItem.id ? (
+                            <View style={styles.editForm}>
+                              <View style={styles.editInputContainer}>
+                                <Text style={styles.currencySymbol}>
+                                  {isPercent ? '' : '$'}
+                                </Text>
+                                <TextInput
+                                  style={styles.editInput}
+                                  value={editPrice}
+                                  onChangeText={setEditPrice}
+                                  keyboardType="numeric"
+                                  autoFocus
+                                  placeholder="0"
+                                  placeholderTextColor={colors.textSecondary}
+                                />
+                                <Text style={styles.percentSymbol}>
+                                  {isPercent ? '%' : ''}
+                                </Text>
+                              </View>
+                              <View style={styles.editActions}>
+                                <TouchableOpacity 
+                                  style={styles.saveButton}
+                                  onPress={() => handleUpdatePrice(priceItem.id, priceItem.service_name)}
+                                  activeOpacity={0.8}
+                                >
+                                  <IconSymbol 
+                                    ios_icon_name="checkmark.circle.fill" 
+                                    android_material_icon_name="check_circle" 
+                                    size={28} 
+                                    color="#22c55e" 
+                                  />
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                  style={styles.cancelButton}
+                                  onPress={() => {
+                                    setEditingId(null);
+                                    setEditPrice("");
+                                  }}
+                                  activeOpacity={0.8}
+                                >
+                                  <IconSymbol 
+                                    ios_icon_name="xmark.circle.fill" 
+                                    android_material_icon_name="cancel" 
+                                    size={28} 
+                                    color={colors.textSecondary} 
+                                  />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          ) : (
+                            <View style={styles.priceRow}>
+                              <View style={styles.priceValueContainer}>
+                                <Text style={styles.priceValue}>
+                                  {isPercent ? `${priceItem.price}%` : `$${priceItem.price.toFixed(2)}`}
+                                </Text>
+                              </View>
+                              <TouchableOpacity 
+                                style={styles.editButton}
+                                onPress={() => {
+                                  setEditingId(priceItem.id);
+                                  setEditPrice(priceItem.price.toString());
+                                }}
+                                activeOpacity={0.8}
+                              >
+                                <IconSymbol 
+                                  ios_icon_name="pencil.circle.fill" 
+                                  android_material_icon_name="edit" 
+                                  size={28} 
+                                  color={colors.primary} 
+                                />
+                                <Text style={styles.editButtonText}>Edit</Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+            </React.Fragment>
           )}
 
           {/* Warning Section */}
@@ -458,6 +602,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     marginTop: 12,
+  },
+  categorySection: {
+    marginBottom: 32,
+  },
+  categoryTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  categorySubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 16,
   },
   listContainer: {
     gap: 16,

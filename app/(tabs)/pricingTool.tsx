@@ -24,18 +24,19 @@ const PRICING_CONFIG = {
   // Square footage ranges with their base prices
   // Format: { maxSqFt: price }
   // Ranges: 0-999, 1000-1999, 2000-2999, etc.
+  // Updated to $100 increments instead of $50
   sqftRanges: [
     { min: 0, max: 999, price: 400 },
-    { min: 1000, max: 1999, price: 450 },
-    { min: 2000, max: 2999, price: 500 },
-    { min: 3000, max: 3999, price: 550 },
-    { min: 4000, max: 4999, price: 600 },
-    { min: 5000, max: 5999, price: 650 },
-    { min: 6000, max: 6999, price: 700 },
-    { min: 7000, max: 7999, price: 750 },
-    { min: 8000, max: 8999, price: 800 },
-    { min: 9000, max: 9999, price: 850 },
-    { min: 10000, max: Infinity, price: 900 },
+    { min: 1000, max: 1999, price: 500 },
+    { min: 2000, max: 2999, price: 600 },
+    { min: 3000, max: 3999, price: 700 },
+    { min: 4000, max: 4999, price: 800 },
+    { min: 5000, max: 5999, price: 900 },
+    { min: 6000, max: 6999, price: 1000 },
+    { min: 7000, max: 7999, price: 1100 },
+    { min: 8000, max: 8999, price: 1200 },
+    { min: 9000, max: 9999, price: 1300 },
+    { min: 10000, max: Infinity, price: 1400 },
   ],
   
   // Clean & Seal pricing ranges (for single HVAC system)
@@ -58,6 +59,15 @@ const PRICING_CONFIG = {
   partnerDiscountPercent: 20,
 };
 
+interface AddOnService {
+  id: string;
+  service_name: string;
+  price: number;
+  description: string;
+  enabled: boolean;
+  quantity: number;
+}
+
 export default function PricingToolScreen() {
   const theme = useTheme();
   
@@ -73,14 +83,19 @@ export default function PricingToolScreen() {
     discount: number;
     total: number;
     cleanAndSealPrice: number;
+    addOnsTotal: number;
   } | null>(null);
   
   // State for zipcode charges from Supabase
   const [zipcodeCharges, setZipcodeCharges] = useState<{ [key: string]: number }>({});
   const [isLoadingZipcodes, setIsLoadingZipcodes] = useState(true);
+  
+  // State for add-on services
+  const [addOnServices, setAddOnServices] = useState<AddOnService[]>([]);
 
   useEffect(() => {
     loadZipcodeCharges();
+    loadAddOnServices();
   }, []);
 
   const loadZipcodeCharges = async () => {
@@ -112,6 +127,85 @@ export default function PricingToolScreen() {
     } finally {
       setIsLoadingZipcodes(false);
     }
+  };
+
+  const loadAddOnServices = async () => {
+    try {
+      console.log("Loading add-on services from Supabase...");
+      
+      const { data, error } = await supabase
+        .from('service_prices')
+        .select('*')
+        .in('service_name', [
+          'dryer_vent',
+          'anti_microbial_fogging',
+          'evap_coil_cleaning',
+          'outdoor_coil_cleaning',
+          'bathroom_fan_cleaning'
+        ]);
+
+      if (error) {
+        console.error("Error loading add-on services:", error);
+        return;
+      }
+
+      const services: AddOnService[] = (data || []).map(item => ({
+        id: item.id,
+        service_name: item.service_name,
+        price: parseFloat(item.price),
+        description: item.description,
+        enabled: false,
+        quantity: 1,
+      }));
+
+      setAddOnServices(services);
+      console.log(`Loaded ${services.length} add-on services`);
+    } catch (error) {
+      console.error("Error loading add-on services:", error);
+    }
+  };
+
+  const toggleAddOn = (serviceId: string) => {
+    setAddOnServices(prev => 
+      prev.map(service => 
+        service.id === serviceId 
+          ? { ...service, enabled: !service.enabled }
+          : service
+      )
+    );
+  };
+
+  const updateAddOnQuantity = (serviceId: string, quantity: number) => {
+    if (quantity < 1) return;
+    setAddOnServices(prev => 
+      prev.map(service => 
+        service.id === serviceId 
+          ? { ...service, quantity }
+          : service
+      )
+    );
+  };
+
+  const getAddOnDisplayName = (serviceName: string): string => {
+    const names: { [key: string]: string } = {
+      'dryer_vent': 'Dryer Vent',
+      'anti_microbial_fogging': 'Anti-Microbial Fogging',
+      'evap_coil_cleaning': 'In-place Evap Coil Cleaning',
+      'outdoor_coil_cleaning': 'Outdoor Coil Cleaning',
+      'bathroom_fan_cleaning': 'Bathroom Fan Cleaning',
+    };
+    return names[serviceName] || serviceName;
+  };
+
+  const getAddOnIcon = (serviceName: string): { ios: string; android: string } => {
+    const icons: { [key: string]: { ios: string; android: string } } = {
+      'dryer_vent': { ios: 'wind', android: 'air' },
+      'anti_microbial_fogging': { ios: 'sparkles', android: 'auto_awesome' },
+      'evap_coil_cleaning': { ios: 'snowflake', android: 'ac_unit' },
+      'outdoor_coil_cleaning': { ios: 'fan.fill', android: 'hvac' },
+      'bathroom_fan_cleaning': { ios: 'fan.badge.automatic', android: 'mode_fan' },
+    };
+    return icons[serviceName] || { ios: 'plus.circle', android: 'add_circle' };
   };
 
   const getSqftCharge = (sqft: number): number => {
@@ -152,6 +246,12 @@ export default function PricingToolScreen() {
     }
   };
 
+  const calculateAddOnsTotal = (): number => {
+    return addOnServices
+      .filter(service => service.enabled)
+      .reduce((total, service) => total + (service.price * service.quantity), 0);
+  };
+
   const calculateQuote = () => {
     console.log("Calculate Quote - Validating inputs");
     
@@ -187,7 +287,8 @@ export default function PricingToolScreen() {
     const sqftCharge = getSqftCharge(sqFt);
     const hvacCharge = hvacCount * PRICING_CONFIG.hvacSystemCharge;
     const zipcodeCharge = getZipcodeCharge(zipcode);
-    const subtotal = sqftCharge + hvacCharge + zipcodeCharge;
+    const addOnsTotal = calculateAddOnsTotal();
+    const subtotal = sqftCharge + hvacCharge + zipcodeCharge + addOnsTotal;
     
     // Calculate 20% partner discount
     const discount = subtotal * (PRICING_CONFIG.partnerDiscountPercent / 100);
@@ -205,6 +306,7 @@ export default function PricingToolScreen() {
       discount,
       total,
       cleanAndSealPrice,
+      addOnsTotal,
     });
     setQuote(total);
 
@@ -215,6 +317,7 @@ export default function PricingToolScreen() {
       sqftCharge,
       hvacCharge,
       zipcodeCharge,
+      addOnsTotal,
       subtotal,
       discount,
       total,
@@ -228,6 +331,7 @@ export default function PricingToolScreen() {
     setZipcode("");
     setQuote(null);
     setBreakdown(null);
+    setAddOnServices(prev => prev.map(service => ({ ...service, enabled: false, quantity: 1 })));
   };
 
   const getSqftRangeText = (sqft: number): string => {
@@ -334,6 +438,95 @@ export default function PricingToolScreen() {
             </Text>
           </View>
 
+          {/* Add-On Services Section */}
+          {addOnServices.length > 0 && (
+            <View style={styles.addOnsSection}>
+              <Text style={styles.addOnsTitle}>Additional Services (Optional)</Text>
+              <Text style={styles.addOnsSubtitle}>Select any additional services to include in the quote</Text>
+              
+              {addOnServices.map((service) => {
+                const icon = getAddOnIcon(service.service_name);
+                const needsQuantity = service.service_name === 'anti_microbial_fogging';
+                
+                return (
+                  <View key={service.id} style={styles.addOnItem}>
+                    <TouchableOpacity 
+                      style={styles.addOnCheckbox}
+                      onPress={() => toggleAddOn(service.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[
+                        styles.checkbox,
+                        service.enabled && styles.checkboxChecked
+                      ]}>
+                        {service.enabled && (
+                          <IconSymbol 
+                            ios_icon_name="checkmark" 
+                            android_material_icon_name="check" 
+                            size={16} 
+                            color="#ffffff" 
+                          />
+                        )}
+                      </View>
+                      <View style={styles.addOnInfo}>
+                        <View style={styles.addOnHeader}>
+                          <IconSymbol 
+                            ios_icon_name={icon.ios} 
+                            android_material_icon_name={icon.android} 
+                            size={20} 
+                            color={service.enabled ? colors.primary : colors.textSecondary} 
+                          />
+                          <Text style={[
+                            styles.addOnName,
+                            service.enabled && styles.addOnNameActive
+                          ]}>
+                            {getAddOnDisplayName(service.service_name)}
+                          </Text>
+                        </View>
+                        <Text style={styles.addOnPrice}>
+                          ${service.price.toFixed(2)}{needsQuantity ? ' per system' : ''}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    {service.enabled && needsQuantity && (
+                      <View style={styles.quantityContainer}>
+                        <Text style={styles.quantityLabel}>Systems:</Text>
+                        <View style={styles.quantityControls}>
+                          <TouchableOpacity 
+                            style={styles.quantityButton}
+                            onPress={() => updateAddOnQuantity(service.id, service.quantity - 1)}
+                            activeOpacity={0.7}
+                          >
+                            <IconSymbol 
+                              ios_icon_name="minus" 
+                              android_material_icon_name="remove" 
+                              size={16} 
+                              color={colors.primary} 
+                            />
+                          </TouchableOpacity>
+                          <Text style={styles.quantityValue}>{service.quantity}</Text>
+                          <TouchableOpacity 
+                            style={styles.quantityButton}
+                            onPress={() => updateAddOnQuantity(service.id, service.quantity + 1)}
+                            activeOpacity={0.7}
+                          >
+                            <IconSymbol 
+                              ios_icon_name="plus" 
+                              android_material_icon_name="add" 
+                              size={16} 
+                              color={colors.primary} 
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
           <TouchableOpacity 
             style={styles.calculateButton} 
             onPress={calculateQuote}
@@ -400,6 +593,36 @@ export default function PricingToolScreen() {
                   </View>
                   <Text style={styles.breakdownValue}>${breakdown.zipcodeCharge.toFixed(2)}</Text>
                 </View>
+
+                {breakdown.addOnsTotal > 0 && (
+                  <React.Fragment>
+                    <View style={styles.breakdownDivider} />
+                    <Text style={styles.breakdownSubtitle}>Additional Services</Text>
+                    {addOnServices
+                      .filter(service => service.enabled)
+                      .map((service) => {
+                        const icon = getAddOnIcon(service.service_name);
+                        const total = service.price * service.quantity;
+                        return (
+                          <View key={service.id} style={styles.breakdownRow}>
+                            <View style={styles.breakdownLeft}>
+                              <IconSymbol 
+                                ios_icon_name={icon.ios} 
+                                android_material_icon_name={icon.android} 
+                                size={16} 
+                                color={colors.textSecondary} 
+                              />
+                              <Text style={styles.breakdownLabel}>
+                                {getAddOnDisplayName(service.service_name)}
+                                {service.quantity > 1 ? ` (${service.quantity} × $${service.price.toFixed(2)})` : ''}
+                              </Text>
+                            </View>
+                            <Text style={styles.breakdownValue}>${total.toFixed(2)}</Text>
+                          </View>
+                        );
+                      })}
+                  </React.Fragment>
+                )}
 
                 <View style={styles.breakdownDivider} />
 
@@ -501,13 +724,16 @@ export default function PricingToolScreen() {
               Pricing is calculated based on:
             </Text>
             <Text style={styles.infoText}>
-              - Square footage range (starting at $400, includes 1 HVAC system)
+              - Square footage range (starting at $400, $100 increments, includes 1 HVAC system)
             </Text>
             <Text style={styles.infoText}>
               - Additional HVAC systems ($300 each)
             </Text>
             <Text style={styles.infoText}>
               - Location-based zipcode charges (loaded from database)
+            </Text>
+            <Text style={styles.infoText}>
+              - Optional add-on services (Dryer Vent, Anti-Microbial Fogging, etc.)
             </Text>
             <Text style={styles.infoText}>
               - 20% Partner Discount automatically applied
@@ -613,6 +839,108 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontStyle: 'italic',
   },
+  addOnsSection: {
+    marginBottom: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  addOnsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  addOnsSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 16,
+  },
+  addOnItem: {
+    marginBottom: 12,
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  addOnCheckbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  addOnInfo: {
+    flex: 1,
+  },
+  addOnHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  addOnName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  addOnNameActive: {
+    color: colors.text,
+  },
+  addOnPrice: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginLeft: 28,
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  quantityLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginRight: 12,
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  quantityButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    minWidth: 24,
+    textAlign: 'center',
+  },
   calculateButton: {
     backgroundColor: colors.primary,
     borderRadius: 8,
@@ -659,6 +987,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     marginBottom: 12,
+  },
+  breakdownSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 8,
+    marginBottom: 8,
   },
   breakdownRow: {
     flexDirection: 'row',
