@@ -33,6 +33,15 @@ interface AdminOption {
 
 const ADMIN_OPTIONS: AdminOption[] = [
   {
+    id: 'zipcode-list',
+    title: 'Zipcode List',
+    description: 'View all zipcodes organized by charges',
+    route: '/(tabs)/zipcodeList',
+    iosIcon: 'list.bullet.rectangle',
+    androidIcon: 'list',
+    color: '#06b6d4',
+  },
+  {
     id: 'zipcodes',
     title: 'Zipcode Manager',
     description: 'Add, edit, and manage zipcode charges',
@@ -290,7 +299,8 @@ export default function AdminDashboardScreen() {
           <View style={styles.infoTextContainer}>
             <Text style={styles.infoTitle}>Quick Tips</Text>
             <Text style={styles.infoText}>
-              - Use Zipcode Manager to add or update service area charges{'\n'}
+              - Zipcode List shows all zipcodes organized by charge{'\n'}
+              - Zipcode Manager lets you add or update service area charges{'\n'}
               - Company Manager controls the dropdown in job request forms{'\n'}
               - Price Editor updates base pricing for all quotes{'\n'}
               - Zipcode Analyzer helps identify coverage gaps{'\n'}
