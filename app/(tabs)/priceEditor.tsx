@@ -29,11 +29,29 @@ interface ServicePrice {
   description: string;
 }
 
+interface SquareFootagePricing {
+  id: string;
+  min_sqft: number;
+  max_sqft: number;
+  price: number;
+  description: string;
+}
+
+interface CleanSealPricing {
+  id: string;
+  min_sqft: number;
+  max_sqft: number;
+  price: number;
+  description: string;
+}
+
 export default function PriceEditorScreen() {
   const theme = useTheme();
   const router = useRouter();
   
   const [prices, setPrices] = useState<ServicePrice[]>([]);
+  const [sqftPricing, setSqftPricing] = useState<SquareFootagePricing[]>([]);
+  const [cleanSealPricing, setCleanSealPricing] = useState<CleanSealPricing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,7 +81,7 @@ export default function PriceEditorScreen() {
       
       console.log("Admin session verified, loading prices");
       setIsCheckingAuth(false);
-      loadPrices();
+      loadAllPrices();
     } catch (error) {
       console.error("Error checking admin session:", error);
       Alert.alert("Error", "Failed to verify admin session. Please login again.");
@@ -71,22 +89,51 @@ export default function PriceEditorScreen() {
     }
   };
 
-  const loadPrices = async () => {
+  const loadAllPrices = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      
+      // Load service prices
+      const { data: servicePrices, error: servicePricesError } = await supabase
         .from('service_prices')
         .select('*')
         .order('service_name', { ascending: true });
 
-      if (error) {
-        console.error("Error loading prices:", error);
-        Alert.alert("Error", "Failed to load pricing data.");
-        return;
+      if (servicePricesError) {
+        console.error("Error loading service prices:", servicePricesError);
+        Alert.alert("Error", "Failed to load service pricing data.");
+      } else {
+        setPrices(servicePrices || []);
+        console.log(`Loaded ${servicePrices?.length || 0} service prices`);
       }
 
-      setPrices(data || []);
-      console.log(`Loaded ${data?.length || 0} service prices`);
+      // Load square footage pricing
+      const { data: sqftData, error: sqftError } = await supabase
+        .from('square_footage_pricing')
+        .select('*')
+        .order('min_sqft', { ascending: true });
+
+      if (sqftError) {
+        console.error("Error loading square footage pricing:", sqftError);
+        Alert.alert("Error", "Failed to load square footage pricing data.");
+      } else {
+        setSqftPricing(sqftData || []);
+        console.log(`Loaded ${sqftData?.length || 0} square footage pricing ranges`);
+      }
+
+      // Load clean & seal pricing
+      const { data: cleanSealData, error: cleanSealError } = await supabase
+        .from('clean_seal_pricing')
+        .select('*')
+        .order('min_sqft', { ascending: true });
+
+      if (cleanSealError) {
+        console.error("Error loading clean & seal pricing:", cleanSealError);
+        Alert.alert("Error", "Failed to load clean & seal pricing data.");
+      } else {
+        setCleanSealPricing(cleanSealData || []);
+        console.log(`Loaded ${cleanSealData?.length || 0} clean & seal pricing ranges`);
+      }
     } catch (error) {
       console.error("Error loading prices:", error);
       Alert.alert("Error", "An error occurred while loading prices.");
@@ -95,7 +142,7 @@ export default function PriceEditorScreen() {
     }
   };
 
-  const handleUpdatePrice = async (id: string, serviceName: string) => {
+  const handleUpdateServicePrice = async (id: string, serviceName: string) => {
     const price = parseFloat(editPrice);
     if (isNaN(price) || price < 0) {
       Alert.alert("Invalid Price", "Price must be a positive number.");
@@ -117,10 +164,70 @@ export default function PriceEditorScreen() {
       console.log("Price updated successfully");
       setEditingId(null);
       setEditPrice("");
-      loadPrices();
+      loadAllPrices();
       Alert.alert("Success", `${getDisplayName(serviceName)} updated successfully!`);
     } catch (error) {
       console.error("Error updating price:", error);
+      Alert.alert("Error", "An error occurred while updating price.");
+    }
+  };
+
+  const handleUpdateSqftPrice = async (id: string, description: string) => {
+    const price = parseFloat(editPrice);
+    if (isNaN(price) || price < 0) {
+      Alert.alert("Invalid Price", "Price must be a positive number.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('square_footage_pricing')
+        .update({ price, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) {
+        console.error("Error updating square footage price:", error);
+        Alert.alert("Error", "Failed to update price.");
+        return;
+      }
+
+      console.log("Square footage price updated successfully");
+      setEditingId(null);
+      setEditPrice("");
+      loadAllPrices();
+      Alert.alert("Success", `${description} pricing updated successfully!`);
+    } catch (error) {
+      console.error("Error updating square footage price:", error);
+      Alert.alert("Error", "An error occurred while updating price.");
+    }
+  };
+
+  const handleUpdateCleanSealPrice = async (id: string, description: string) => {
+    const price = parseFloat(editPrice);
+    if (isNaN(price) || price < 0) {
+      Alert.alert("Invalid Price", "Price must be a positive number.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('clean_seal_pricing')
+        .update({ price, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) {
+        console.error("Error updating clean & seal price:", error);
+        Alert.alert("Error", "Failed to update price.");
+        return;
+      }
+
+      console.log("Clean & seal price updated successfully");
+      setEditingId(null);
+      setEditPrice("");
+      loadAllPrices();
+      Alert.alert("Success", `${description} pricing updated successfully!`);
+    } catch (error) {
+      console.error("Error updating clean & seal price:", error);
       Alert.alert("Error", "An error occurred while updating price.");
     }
   };
@@ -175,6 +282,13 @@ export default function PriceEditorScreen() {
       console.error("Error logging out:", error);
       Alert.alert("Error", "Failed to logout. Please try again.");
     }
+  };
+
+  const formatSqftRange = (minSqft: number, maxSqft: number): string => {
+    if (maxSqft >= 999999) {
+      return `${minSqft.toLocaleString()}+ sqft`;
+    }
+    return `${minSqft.toLocaleString()}-${maxSqft.toLocaleString()} sqft`;
   };
 
   // Show loading screen while checking authentication
@@ -252,7 +366,7 @@ export default function PriceEditorScreen() {
             <View style={styles.infoTextContainer}>
               <Text style={styles.infoTitle}>Service Pricing Configuration</Text>
               <Text style={styles.infoText}>
-                Update the base prices for duct cleaning, duct clean & seal services, and add-on services. These prices are used in the Pricing Tool to generate customer quotes.
+                Update all pricing for duct cleaning services, including square footage ranges, clean & seal pricing, and add-on services. These prices are used in the Pricing Tool to generate customer quotes.
               </Text>
             </View>
           </View>
@@ -265,10 +379,249 @@ export default function PriceEditorScreen() {
             </View>
           ) : (
             <React.Fragment>
+              {/* Square Footage Pricing Section */}
+              {sqftPricing.length > 0 && (
+                <View style={styles.categorySection}>
+                  <View style={styles.categoryHeader}>
+                    <IconSymbol 
+                      ios_icon_name="house.fill" 
+                      android_material_icon_name="home" 
+                      size={24} 
+                      color={colors.primary} 
+                    />
+                    <Text style={styles.categoryTitle}>Duct Cleaning - Square Footage Pricing</Text>
+                  </View>
+                  <Text style={styles.categorySubtitle}>
+                    Base pricing by home square footage (includes 1 HVAC system)
+                  </Text>
+                  <View style={styles.listContainer}>
+                    {sqftPricing.map((priceItem) => {
+                      return (
+                        <View key={priceItem.id} style={styles.priceCard}>
+                          <View style={styles.priceHeader}>
+                            <View style={styles.priceIconContainer}>
+                              <IconSymbol 
+                                ios_icon_name="house.fill" 
+                                android_material_icon_name="home" 
+                                size={24} 
+                                color={colors.primary} 
+                              />
+                            </View>
+                            <View style={styles.priceInfo}>
+                              <Text style={styles.priceName}>
+                                {formatSqftRange(priceItem.min_sqft, priceItem.max_sqft)}
+                              </Text>
+                              <Text style={styles.priceDescription}>
+                                {priceItem.description}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {editingId === `sqft_${priceItem.id}` ? (
+                            <View style={styles.editForm}>
+                              <View style={styles.editInputContainer}>
+                                <Text style={styles.currencySymbol}>$</Text>
+                                <TextInput
+                                  style={styles.editInput}
+                                  value={editPrice}
+                                  onChangeText={setEditPrice}
+                                  keyboardType="numeric"
+                                  autoFocus
+                                  placeholder="0"
+                                  placeholderTextColor={colors.textSecondary}
+                                />
+                              </View>
+                              <View style={styles.editActions}>
+                                <TouchableOpacity 
+                                  style={styles.saveButton}
+                                  onPress={() => handleUpdateSqftPrice(priceItem.id, priceItem.description)}
+                                  activeOpacity={0.8}
+                                >
+                                  <IconSymbol 
+                                    ios_icon_name="checkmark.circle.fill" 
+                                    android_material_icon_name="check_circle" 
+                                    size={28} 
+                                    color="#22c55e" 
+                                  />
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                  style={styles.cancelButton}
+                                  onPress={() => {
+                                    setEditingId(null);
+                                    setEditPrice("");
+                                  }}
+                                  activeOpacity={0.8}
+                                >
+                                  <IconSymbol 
+                                    ios_icon_name="xmark.circle.fill" 
+                                    android_material_icon_name="cancel" 
+                                    size={28} 
+                                    color={colors.textSecondary} 
+                                  />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          ) : (
+                            <View style={styles.priceRow}>
+                              <View style={styles.priceValueContainer}>
+                                <Text style={styles.priceValue}>
+                                  ${parseFloat(priceItem.price.toString()).toFixed(2)}
+                                </Text>
+                              </View>
+                              <TouchableOpacity 
+                                style={styles.editButton}
+                                onPress={() => {
+                                  setEditingId(`sqft_${priceItem.id}`);
+                                  setEditPrice(priceItem.price.toString());
+                                }}
+                                activeOpacity={0.8}
+                              >
+                                <IconSymbol 
+                                  ios_icon_name="pencil.circle.fill" 
+                                  android_material_icon_name="edit" 
+                                  size={28} 
+                                  color={colors.primary} 
+                                />
+                                <Text style={styles.editButtonText}>Edit</Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Clean & Seal Pricing Section */}
+              {cleanSealPricing.length > 0 && (
+                <View style={styles.categorySection}>
+                  <View style={styles.categoryHeader}>
+                    <IconSymbol 
+                      ios_icon_name="sparkles" 
+                      android_material_icon_name="auto_awesome" 
+                      size={24} 
+                      color={colors.accent} 
+                    />
+                    <Text style={styles.categoryTitle}>Clean & Seal - Square Footage Pricing</Text>
+                  </View>
+                  <Text style={styles.categorySubtitle}>
+                    Clean & seal pricing by home square footage (for 1 HVAC system)
+                  </Text>
+                  <View style={styles.listContainer}>
+                    {cleanSealPricing.map((priceItem) => {
+                      return (
+                        <View key={priceItem.id} style={styles.priceCard}>
+                          <View style={styles.priceHeader}>
+                            <View style={styles.priceIconContainer}>
+                              <IconSymbol 
+                                ios_icon_name="sparkles" 
+                                android_material_icon_name="auto_awesome" 
+                                size={24} 
+                                color={colors.accent} 
+                              />
+                            </View>
+                            <View style={styles.priceInfo}>
+                              <Text style={styles.priceName}>
+                                {formatSqftRange(priceItem.min_sqft, priceItem.max_sqft)}
+                              </Text>
+                              <Text style={styles.priceDescription}>
+                                {priceItem.description}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {editingId === `clean_seal_${priceItem.id}` ? (
+                            <View style={styles.editForm}>
+                              <View style={styles.editInputContainer}>
+                                <Text style={styles.currencySymbol}>$</Text>
+                                <TextInput
+                                  style={styles.editInput}
+                                  value={editPrice}
+                                  onChangeText={setEditPrice}
+                                  keyboardType="numeric"
+                                  autoFocus
+                                  placeholder="0"
+                                  placeholderTextColor={colors.textSecondary}
+                                />
+                              </View>
+                              <View style={styles.editActions}>
+                                <TouchableOpacity 
+                                  style={styles.saveButton}
+                                  onPress={() => handleUpdateCleanSealPrice(priceItem.id, priceItem.description)}
+                                  activeOpacity={0.8}
+                                >
+                                  <IconSymbol 
+                                    ios_icon_name="checkmark.circle.fill" 
+                                    android_material_icon_name="check_circle" 
+                                    size={28} 
+                                    color="#22c55e" 
+                                  />
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                  style={styles.cancelButton}
+                                  onPress={() => {
+                                    setEditingId(null);
+                                    setEditPrice("");
+                                  }}
+                                  activeOpacity={0.8}
+                                >
+                                  <IconSymbol 
+                                    ios_icon_name="xmark.circle.fill" 
+                                    android_material_icon_name="cancel" 
+                                    size={28} 
+                                    color={colors.textSecondary} 
+                                  />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          ) : (
+                            <View style={styles.priceRow}>
+                              <View style={styles.priceValueContainer}>
+                                <Text style={styles.priceValue}>
+                                  ${parseFloat(priceItem.price.toString()).toFixed(2)}
+                                </Text>
+                              </View>
+                              <TouchableOpacity 
+                                style={styles.editButton}
+                                onPress={() => {
+                                  setEditingId(`clean_seal_${priceItem.id}`);
+                                  setEditPrice(priceItem.price.toString());
+                                }}
+                                activeOpacity={0.8}
+                              >
+                                <IconSymbol 
+                                  ios_icon_name="pencil.circle.fill" 
+                                  android_material_icon_name="edit" 
+                                  size={28} 
+                                  color={colors.primary} 
+                                />
+                                <Text style={styles.editButtonText}>Edit</Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
               {/* Base Pricing Section */}
               {basePrices.length > 0 && (
                 <View style={styles.categorySection}>
-                  <Text style={styles.categoryTitle}>Base Pricing</Text>
+                  <View style={styles.categoryHeader}>
+                    <IconSymbol 
+                      ios_icon_name="gearshape.fill" 
+                      android_material_icon_name="settings" 
+                      size={24} 
+                      color={colors.primary} 
+                    />
+                    <Text style={styles.categoryTitle}>Other Base Pricing</Text>
+                  </View>
+                  <Text style={styles.categorySubtitle}>
+                    Additional charges and configuration
+                  </Text>
                   <View style={styles.listContainer}>
                     {basePrices.map((priceItem) => {
                       const icon = getIcon(priceItem.service_name);
@@ -295,7 +648,7 @@ export default function PriceEditorScreen() {
                             </View>
                           </View>
 
-                          {editingId === priceItem.id ? (
+                          {editingId === `service_${priceItem.id}` ? (
                             <View style={styles.editForm}>
                               <View style={styles.editInputContainer}>
                                 <Text style={styles.currencySymbol}>
@@ -317,7 +670,7 @@ export default function PriceEditorScreen() {
                               <View style={styles.editActions}>
                                 <TouchableOpacity 
                                   style={styles.saveButton}
-                                  onPress={() => handleUpdatePrice(priceItem.id, priceItem.service_name)}
+                                  onPress={() => handleUpdateServicePrice(priceItem.id, priceItem.service_name)}
                                   activeOpacity={0.8}
                                 >
                                   <IconSymbol 
@@ -354,7 +707,7 @@ export default function PriceEditorScreen() {
                               <TouchableOpacity 
                                 style={styles.editButton}
                                 onPress={() => {
-                                  setEditingId(priceItem.id);
+                                  setEditingId(`service_${priceItem.id}`);
                                   setEditPrice(priceItem.price.toString());
                                 }}
                                 activeOpacity={0.8}
@@ -379,7 +732,15 @@ export default function PriceEditorScreen() {
               {/* Add-On Services Section */}
               {addOnPrices.length > 0 && (
                 <View style={styles.categorySection}>
-                  <Text style={styles.categoryTitle}>Add-On Services</Text>
+                  <View style={styles.categoryHeader}>
+                    <IconSymbol 
+                      ios_icon_name="plus.circle.fill" 
+                      android_material_icon_name="add_circle" 
+                      size={24} 
+                      color={colors.accent} 
+                    />
+                    <Text style={styles.categoryTitle}>Add-On Services</Text>
+                  </View>
                   <Text style={styles.categorySubtitle}>
                     Optional services that can be added to any quote
                   </Text>
@@ -409,7 +770,7 @@ export default function PriceEditorScreen() {
                             </View>
                           </View>
 
-                          {editingId === priceItem.id ? (
+                          {editingId === `service_${priceItem.id}` ? (
                             <View style={styles.editForm}>
                               <View style={styles.editInputContainer}>
                                 <Text style={styles.currencySymbol}>
@@ -431,7 +792,7 @@ export default function PriceEditorScreen() {
                               <View style={styles.editActions}>
                                 <TouchableOpacity 
                                   style={styles.saveButton}
-                                  onPress={() => handleUpdatePrice(priceItem.id, priceItem.service_name)}
+                                  onPress={() => handleUpdateServicePrice(priceItem.id, priceItem.service_name)}
                                   activeOpacity={0.8}
                                 >
                                   <IconSymbol 
@@ -468,7 +829,7 @@ export default function PriceEditorScreen() {
                               <TouchableOpacity 
                                 style={styles.editButton}
                                 onPress={() => {
-                                  setEditingId(priceItem.id);
+                                  setEditingId(`service_${priceItem.id}`);
                                   setEditPrice(priceItem.price.toString());
                                 }}
                                 activeOpacity={0.8}
@@ -606,11 +967,16 @@ const styles = StyleSheet.create({
   categorySection: {
     marginBottom: 32,
   },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
   categoryTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
   },
   categorySubtitle: {
     fontSize: 14,

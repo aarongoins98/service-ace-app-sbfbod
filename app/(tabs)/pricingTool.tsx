@@ -18,47 +18,6 @@ import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/app/integrations/supabase/client";
 
-// Pricing Configuration
-// You can easily update these values to adjust pricing
-const PRICING_CONFIG = {
-  // Square footage ranges with their base prices
-  // Format: { maxSqFt: price }
-  // Ranges: 0-999, 1000-1999, 2000-2999, etc.
-  // Updated to $100 increments instead of $50
-  sqftRanges: [
-    { min: 0, max: 999, price: 400 },
-    { min: 1000, max: 1999, price: 500 },
-    { min: 2000, max: 2999, price: 600 },
-    { min: 3000, max: 3999, price: 700 },
-    { min: 4000, max: 4999, price: 800 },
-    { min: 5000, max: 5999, price: 900 },
-    { min: 6000, max: 6999, price: 1000 },
-    { min: 7000, max: 7999, price: 1100 },
-    { min: 8000, max: 8999, price: 1200 },
-    { min: 9000, max: 9999, price: 1300 },
-    { min: 10000, max: Infinity, price: 1400 },
-  ],
-  
-  // Clean & Seal pricing ranges (for single HVAC system)
-  cleanAndSealRanges: [
-    { min: 0, max: 1999, price: 2500 },
-    { min: 2000, max: 2999, price: 2750 },
-    { min: 3000, max: 3999, price: 3000 },
-    { min: 4000, max: 4999, price: 3250 },
-    { min: 5000, max: 5999, price: 3500 },
-    { min: 6000, max: Infinity, price: 3750 },
-  ],
-  
-  // Clean & Seal price per HVAC system (for multiple systems)
-  cleanAndSealPerHvac: 2000,
-  
-  // HVAC system charge per unit
-  hvacSystemCharge: 300,
-  
-  // Partner discount percentage
-  partnerDiscountPercent: 20,
-};
-
 interface AddOnService {
   id: string;
   service_name: string;
@@ -66,6 +25,28 @@ interface AddOnService {
   description: string;
   enabled: boolean;
   quantity: number;
+}
+
+interface SquareFootagePricing {
+  id: string;
+  min_sqft: number;
+  max_sqft: number;
+  price: number;
+  description: string;
+}
+
+interface CleanSealPricing {
+  id: string;
+  min_sqft: number;
+  max_sqft: number;
+  price: number;
+  description: string;
+}
+
+interface ServicePrices {
+  hvacSystemCharge: number;
+  partnerDiscountPercent: number;
+  cleanAndSealPerHvac: number;
 }
 
 export default function PricingToolScreen() {
@@ -86,54 +67,104 @@ export default function PricingToolScreen() {
     addOnsTotal: number;
   } | null>(null);
   
-  // State for zipcode charges from Supabase
+  // State for pricing data from Supabase
   const [zipcodeCharges, setZipcodeCharges] = useState<{ [key: string]: number }>({});
-  const [isLoadingZipcodes, setIsLoadingZipcodes] = useState(true);
+  const [sqftPricing, setSqftPricing] = useState<SquareFootagePricing[]>([]);
+  const [cleanSealPricing, setCleanSealPricing] = useState<CleanSealPricing[]>([]);
+  const [servicePrices, setServicePrices] = useState<ServicePrices>({
+    hvacSystemCharge: 300,
+    partnerDiscountPercent: 20,
+    cleanAndSealPerHvac: 2000,
+  });
+  const [isLoadingPricing, setIsLoadingPricing] = useState(true);
   
   // State for add-on services
   const [addOnServices, setAddOnServices] = useState<AddOnService[]>([]);
 
   useEffect(() => {
-    loadZipcodeCharges();
-    loadAddOnServices();
+    loadAllPricingData();
   }, []);
 
-  const loadZipcodeCharges = async () => {
+  const loadAllPricingData = async () => {
     try {
-      setIsLoadingZipcodes(true);
-      console.log("Loading zipcode charges from Supabase...");
+      setIsLoadingPricing(true);
+      console.log("Loading all pricing data from Supabase...");
       
-      const { data, error } = await supabase
+      // Load zipcode charges
+      const { data: zipcodeData, error: zipcodeError } = await supabase
         .from('zipcode_charges')
         .select('zipcode, charge');
 
-      if (error) {
-        console.error("Error loading zipcode charges:", error);
-        Alert.alert("Error", "Failed to load zipcode data. Using default charges.");
-        return;
+      if (zipcodeError) {
+        console.error("Error loading zipcode charges:", zipcodeError);
+      } else {
+        const chargesMap: { [key: string]: number } = {};
+        zipcodeData?.forEach((item) => {
+          chargesMap[item.zipcode] = item.charge;
+        });
+        setZipcodeCharges(chargesMap);
+        console.log(`Loaded ${zipcodeData?.length || 0} zipcode charges`);
       }
 
-      // Convert array to object for easy lookup
-      const chargesMap: { [key: string]: number } = {};
-      data?.forEach((item) => {
-        chargesMap[item.zipcode] = item.charge;
-      });
+      // Load square footage pricing
+      const { data: sqftData, error: sqftError } = await supabase
+        .from('square_footage_pricing')
+        .select('*')
+        .order('min_sqft', { ascending: true });
 
-      setZipcodeCharges(chargesMap);
-      console.log(`Loaded ${data?.length || 0} zipcode charges from Supabase`);
-    } catch (error) {
-      console.error("Error loading zipcode charges:", error);
-      Alert.alert("Error", "An error occurred while loading zipcode data.");
-    } finally {
-      setIsLoadingZipcodes(false);
-    }
-  };
+      if (sqftError) {
+        console.error("Error loading square footage pricing:", sqftError);
+        Alert.alert("Error", "Failed to load square footage pricing data.");
+      } else {
+        setSqftPricing(sqftData || []);
+        console.log(`Loaded ${sqftData?.length || 0} square footage pricing ranges`);
+      }
 
-  const loadAddOnServices = async () => {
-    try {
-      console.log("Loading add-on services from Supabase...");
-      
-      const { data, error } = await supabase
+      // Load clean & seal pricing
+      const { data: cleanSealData, error: cleanSealError } = await supabase
+        .from('clean_seal_pricing')
+        .select('*')
+        .order('min_sqft', { ascending: true });
+
+      if (cleanSealError) {
+        console.error("Error loading clean & seal pricing:", cleanSealError);
+        Alert.alert("Error", "Failed to load clean & seal pricing data.");
+      } else {
+        setCleanSealPricing(cleanSealData || []);
+        console.log(`Loaded ${cleanSealData?.length || 0} clean & seal pricing ranges`);
+      }
+
+      // Load service prices
+      const { data: servicePricesData, error: servicePricesError } = await supabase
+        .from('service_prices')
+        .select('*')
+        .in('service_name', ['hvac_system_charge', 'partner_discount_percent', 'duct_clean_seal_per_hvac']);
+
+      if (servicePricesError) {
+        console.error("Error loading service prices:", servicePricesError);
+      } else {
+        const prices: ServicePrices = {
+          hvacSystemCharge: 300,
+          partnerDiscountPercent: 20,
+          cleanAndSealPerHvac: 2000,
+        };
+        
+        servicePricesData?.forEach((item) => {
+          if (item.service_name === 'hvac_system_charge') {
+            prices.hvacSystemCharge = parseFloat(item.price);
+          } else if (item.service_name === 'partner_discount_percent') {
+            prices.partnerDiscountPercent = parseFloat(item.price);
+          } else if (item.service_name === 'duct_clean_seal_per_hvac') {
+            prices.cleanAndSealPerHvac = parseFloat(item.price);
+          }
+        });
+        
+        setServicePrices(prices);
+        console.log("Loaded service prices:", prices);
+      }
+
+      // Load add-on services
+      const { data: addOnData, error: addOnError } = await supabase
         .from('service_prices')
         .select('*')
         .in('service_name', [
@@ -144,24 +175,25 @@ export default function PricingToolScreen() {
           'bathroom_fan_cleaning'
         ]);
 
-      if (error) {
-        console.error("Error loading add-on services:", error);
-        return;
+      if (addOnError) {
+        console.error("Error loading add-on services:", addOnError);
+      } else {
+        const services: AddOnService[] = (addOnData || []).map(item => ({
+          id: item.id,
+          service_name: item.service_name,
+          price: parseFloat(item.price),
+          description: item.description,
+          enabled: false,
+          quantity: 1,
+        }));
+        setAddOnServices(services);
+        console.log(`Loaded ${services.length} add-on services`);
       }
-
-      const services: AddOnService[] = (data || []).map(item => ({
-        id: item.id,
-        service_name: item.service_name,
-        price: parseFloat(item.price),
-        description: item.description,
-        enabled: false,
-        quantity: 1,
-      }));
-
-      setAddOnServices(services);
-      console.log(`Loaded ${services.length} add-on services`);
     } catch (error) {
-      console.error("Error loading add-on services:", error);
+      console.error("Error loading pricing data:", error);
+      Alert.alert("Error", "An error occurred while loading pricing data.");
+    } finally {
+      setIsLoadingPricing(false);
     }
   };
 
@@ -209,17 +241,14 @@ export default function PricingToolScreen() {
   };
 
   const getSqftCharge = (sqft: number): number => {
-    const range = PRICING_CONFIG.sqftRanges.find(
-      r => sqft >= r.min && sqft <= r.max
+    const range = sqftPricing.find(
+      r => sqft >= r.min_sqft && sqft <= r.max_sqft
     );
-    return range ? range.price : PRICING_CONFIG.sqftRanges[PRICING_CONFIG.sqftRanges.length - 1].price;
+    return range ? parseFloat(range.price.toString()) : 0;
   };
 
   const getZipcodeCharge = (zip: string): number => {
-    // Remove any spaces or dashes from zipcode
     const cleanZip = zip.replace(/[\s-]/g, '');
-    
-    // Look up charge from Supabase data
     const charge = zipcodeCharges[cleanZip];
     
     if (charge !== undefined) {
@@ -234,15 +263,14 @@ export default function PricingToolScreen() {
   const getCleanAndSealPrice = (sqft: number, hvacCount: number): number => {
     // If only 1 HVAC system (0 additional), price is based on square footage
     if (hvacCount === 0) {
-      const range = PRICING_CONFIG.cleanAndSealRanges.find(
-        r => sqft >= r.min && sqft <= r.max
+      const range = cleanSealPricing.find(
+        r => sqft >= r.min_sqft && sqft <= r.max_sqft
       );
-      return range ? range.price : PRICING_CONFIG.cleanAndSealRanges[PRICING_CONFIG.cleanAndSealRanges.length - 1].price;
+      return range ? parseFloat(range.price.toString()) : 0;
     } else {
-      // Multiple HVAC systems: $2000 per system
-      // hvacCount is "additional" systems, so total systems = hvacCount + 1
+      // Multiple HVAC systems: price per system
       const totalSystems = hvacCount + 1;
-      return totalSystems * PRICING_CONFIG.cleanAndSealPerHvac;
+      return totalSystems * servicePrices.cleanAndSealPerHvac;
     }
   };
 
@@ -285,13 +313,13 @@ export default function PricingToolScreen() {
 
     // Calculate each component
     const sqftCharge = getSqftCharge(sqFt);
-    const hvacCharge = hvacCount * PRICING_CONFIG.hvacSystemCharge;
+    const hvacCharge = hvacCount * servicePrices.hvacSystemCharge;
     const zipcodeCharge = getZipcodeCharge(zipcode);
     const addOnsTotal = calculateAddOnsTotal();
     const subtotal = sqftCharge + hvacCharge + zipcodeCharge + addOnsTotal;
     
-    // Calculate 20% partner discount
-    const discount = subtotal * (PRICING_CONFIG.partnerDiscountPercent / 100);
+    // Calculate partner discount
+    const discount = subtotal * (servicePrices.partnerDiscountPercent / 100);
     const total = subtotal - discount;
 
     // Calculate Clean & Seal price
@@ -335,15 +363,15 @@ export default function PricingToolScreen() {
   };
 
   const getSqftRangeText = (sqft: number): string => {
-    const range = PRICING_CONFIG.sqftRanges.find(
-      r => sqft >= r.min && sqft <= r.max
+    const range = sqftPricing.find(
+      r => sqft >= r.min_sqft && sqft <= r.max_sqft
     );
     if (!range) return "Unknown range";
-    if (range.max === Infinity) return `${range.min}+ sqft`;
-    return `${range.min}-${range.max} sqft`;
+    if (range.max_sqft >= 999999) return `${range.min_sqft.toLocaleString()}+ sqft`;
+    return `${range.min_sqft.toLocaleString()}-${range.max_sqft.toLocaleString()} sqft`;
   };
 
-  if (isLoadingZipcodes) {
+  if (isLoadingPricing) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.loadingContainer}>
@@ -375,10 +403,10 @@ export default function PricingToolScreen() {
           <Text style={styles.title}>Pricing Tool</Text>
           <Text style={styles.subtitle}>Generate accurate service quotes</Text>
           
-          {/* Refresh button for zipcode data */}
+          {/* Refresh button for pricing data */}
           <TouchableOpacity 
             style={styles.refreshButton}
-            onPress={loadZipcodeCharges}
+            onPress={loadAllPricingData}
             activeOpacity={0.8}
           >
             <IconSymbol 
@@ -387,7 +415,7 @@ export default function PricingToolScreen() {
               size={16} 
               color={colors.primary} 
             />
-            <Text style={styles.refreshButtonText}>Refresh Zipcode Data</Text>
+            <Text style={styles.refreshButtonText}>Refresh Pricing Data</Text>
           </TouchableOpacity>
         </View>
 
@@ -418,7 +446,7 @@ export default function PricingToolScreen() {
               keyboardType="numeric"
             />
             <Text style={styles.helperText}>
-              ${PRICING_CONFIG.hvacSystemCharge} per additional HVAC system
+              ${servicePrices.hvacSystemCharge} per additional HVAC system
             </Text>
           </View>
 
@@ -575,7 +603,7 @@ export default function PricingToolScreen() {
                       color={colors.textSecondary} 
                     />
                     <Text style={styles.breakdownLabel}>
-                      Additional HVAC Systems ({hvacSystems} × ${PRICING_CONFIG.hvacSystemCharge})
+                      Additional HVAC Systems ({hvacSystems} × ${servicePrices.hvacSystemCharge})
                     </Text>
                   </View>
                   <Text style={styles.breakdownValue}>${breakdown.hvacCharge.toFixed(2)}</Text>
@@ -642,7 +670,7 @@ export default function PricingToolScreen() {
                       color="#22c55e" 
                     />
                     <Text style={styles.breakdownDiscountLabel}>
-                      Partner Discount ({PRICING_CONFIG.partnerDiscountPercent}%)
+                      Partner Discount ({servicePrices.partnerDiscountPercent}%)
                     </Text>
                   </View>
                   <Text style={styles.breakdownDiscountValue}>-${breakdown.discount.toFixed(2)}</Text>
@@ -684,17 +712,17 @@ export default function PricingToolScreen() {
                       size={16} 
                       color="#ffffff" 
                     />
-                    <Text style={styles.discountBadgeText}>20% Partner Discount</Text>
+                    <Text style={styles.discountBadgeText}>{servicePrices.partnerDiscountPercent}% Partner Discount</Text>
                   </View>
                   <Text style={styles.cleanAndSealDiscountedPrice}>
-                    ${(breakdown.cleanAndSealPrice * 0.8).toFixed(2)}
+                    ${(breakdown.cleanAndSealPrice * (1 - servicePrices.partnerDiscountPercent / 100)).toFixed(2)}
                   </Text>
                 </View>
                 
                 <Text style={styles.cleanAndSealDescription}>
                   {parseInt(hvacSystems) === 0 
                     ? `Based on ${getSqftRangeText(parseFloat(squareFootage))} with 1 HVAC system`
-                    : `Based on ${parseInt(hvacSystems) + 1} total HVAC systems ($${PRICING_CONFIG.cleanAndSealPerHvac} per system)`
+                    : `Based on ${parseInt(hvacSystems) + 1} total HVAC systems ($${servicePrices.cleanAndSealPerHvac} per system)`
                   }
                 </Text>
               </View>
@@ -726,10 +754,10 @@ export default function PricingToolScreen() {
               Pricing is calculated based on:
             </Text>
             <Text style={styles.infoText}>
-              - Square footage range (starting at $400, $100 increments, includes 1 HVAC system)
+              - Square footage range (loaded from database, includes 1 HVAC system)
             </Text>
             <Text style={styles.infoText}>
-              - Additional HVAC systems ($300 each)
+              - Additional HVAC systems (${servicePrices.hvacSystemCharge} each)
             </Text>
             <Text style={styles.infoText}>
               - Location-based zipcode charges (loaded from database)
@@ -738,10 +766,10 @@ export default function PricingToolScreen() {
               - Optional add-on services with customizable quantities
             </Text>
             <Text style={styles.infoText}>
-              - 20% Partner Discount automatically applied
+              - {servicePrices.partnerDiscountPercent}% Partner Discount automatically applied
             </Text>
             <Text style={styles.infoText}>
-              - Clean & Seal: $2,500+ (sqft-based) or $2,000 per HVAC system
+              - Clean & Seal: Sqft-based or ${servicePrices.cleanAndSealPerHvac} per HVAC system
             </Text>
           </View>
         </View>

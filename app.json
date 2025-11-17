@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Service Ace",
-    "slug": "Service Ace",
+    "name": "Refresh Booking Tool",
+    "slug": "Refresh Booking Tool",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/0632746b-9d1e-4872-9744-4e93c2f862d1.png",
@@ -51,5 +51,5 @@
       "router": {}
     }
   },
-  "scheme": "Service Ace"
+  "scheme": "Refresh Booking Tool"
 }
