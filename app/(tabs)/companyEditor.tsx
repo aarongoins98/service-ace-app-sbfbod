@@ -171,14 +171,27 @@ export default function CompanyEditorScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              const { error } = await supabase
+              console.log("=== DELETE COMPANY ===");
+              console.log("Attempting to delete company:");
+              console.log("- ID:", id);
+              console.log("- Name:", name);
+              
+              const { data, error } = await supabase
                 .from('companies')
                 .delete()
-                .eq('id', id);
+                .eq('id', id)
+                .select();
+
+              console.log("Delete response:");
+              console.log("- Data:", data);
+              console.log("- Error:", error);
 
               if (error) {
                 console.error("Error deleting company:", error);
-                Alert.alert("Error", "Failed to delete company.");
+                console.error("Error code:", error.code);
+                console.error("Error message:", error.message);
+                console.error("Error details:", error.details);
+                Alert.alert("Error", `Failed to delete company: ${error.message}`);
                 return;
               }
 
@@ -186,7 +199,7 @@ export default function CompanyEditorScreen() {
               loadCompanies();
               Alert.alert("Success", "Company deleted successfully!");
             } catch (error) {
-              console.error("Error deleting company:", error);
+              console.error("Exception while deleting company:", error);
               Alert.alert("Error", "An error occurred while deleting company.");
             }
           },
