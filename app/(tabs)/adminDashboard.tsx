@@ -11,14 +11,15 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import { useTheme } from "@react-navigation/native";
 import { colors } from "@/styles/commonStyles";
 import { IconSymbol } from "@/components/IconSymbol";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase } from "@/app/integrations/supabase/client";
 
 const ADMIN_SESSION_KEY = "admin_session";
+const ADMIN_EMAIL_KEY = "admin_email";
 
 interface AdminOption {
   id: string;
@@ -70,10 +71,10 @@ const ADMIN_OPTIONS: AdminOption[] = [
 ];
 
 export default function AdminDashboardScreen() {
-  const theme = useTheme();
   const router = useRouter();
   
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [adminEmail, setAdminEmail] = useState<string>("");
 
   useEffect(() => {
     checkAdminSession();
@@ -93,16 +94,40 @@ export default function AdminDashboardScreen() {
       }
       
       const session = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
-      console.log("Admin session value retrieved:", session);
+      const email = await AsyncStorage.getItem(ADMIN_EMAIL_KEY);
       
-      if (session !== "true") {
+      console.log("Admin session value retrieved:", session);
+      console.log("Admin email retrieved:", email);
+      
+      if (session !== "true" || !email) {
         console.log("No valid admin session found, redirecting to login");
         Alert.alert("Access Denied", "Please login as admin first.");
         router.replace("/(tabs)/adminLogin");
         return;
       }
+
+      // Verify the email is still in admin_users table and is active
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('email, is_active')
+        .eq('email', email)
+        .eq('is_active', true)
+        .single();
+
+      if (error || !data) {
+        console.log("Admin email not found or inactive in database");
+        Alert.alert(
+          "Access Revoked", 
+          "Your admin access has been revoked. Please contact your administrator."
+        );
+        await AsyncStorage.removeItem(ADMIN_SESSION_KEY);
+        await AsyncStorage.removeItem(ADMIN_EMAIL_KEY);
+        router.replace("/(tabs)/adminLogin");
+        return;
+      }
       
       console.log("Admin session verified successfully");
+      setAdminEmail(email);
       setIsCheckingAuth(false);
     } catch (error) {
       console.error("=== Admin Dashboard: Session Check Error ===");
@@ -125,7 +150,13 @@ export default function AdminDashboardScreen() {
             try {
               console.log("=== Admin Logout ===");
               console.log("Removing admin session...");
+              
+              // Sign out from Supabase Auth
+              await supabase.auth.signOut();
+              
+              // Clear AsyncStorage
               await AsyncStorage.removeItem(ADMIN_SESSION_KEY);
+              await AsyncStorage.removeItem(ADMIN_EMAIL_KEY);
               console.log("Admin session removed successfully");
               
               // Add a small delay to ensure removal completes
@@ -170,7 +201,12 @@ export default function AdminDashboardScreen() {
             size={28} 
             color={colors.primary} 
           />
-          <Text style={styles.headerTitle}>Admin Dashboard</Text>
+          <View>
+            <Text style={styles.headerTitle}>Admin Dashboard</Text>
+            {adminEmail && (
+              <Text style={styles.headerSubtitle}>{adminEmail}</Text>
+            )}
+          </View>
         </View>
         <TouchableOpacity 
           style={styles.logoutButton} 
@@ -252,6 +288,18 @@ export default function AdminDashboardScreen() {
             </Text>
           </View>
         </View>
+
+        <View style={styles.securityInfo}>
+          <IconSymbol 
+            ios_icon_name="lock.shield.fill" 
+            android_material_icon_name="security" 
+            size={20} 
+            color={colors.success} 
+          />
+          <Text style={styles.securityText}>
+            Your session is secured with email verification
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -286,11 +334,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: colors.text,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   logoutButton: {
     flexDirection: 'row',
@@ -390,6 +445,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
     elevation: 2,
+    marginBottom: 16,
   },
   infoTextContainer: {
     flex: 1,
@@ -404,5 +460,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     lineHeight: 20,
+  },
+  securityInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 12,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.success,
+  },
+  securityText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.success,
   },
 });
