@@ -68,6 +68,15 @@ const ADMIN_OPTIONS: AdminOption[] = [
     androidIcon: 'analytics',
     color: '#f59e0b',
   },
+  {
+    id: 'password',
+    title: 'Change Password',
+    description: 'Update your admin password',
+    route: '/(tabs)/adminPasswordChange',
+    iosIcon: 'lock.rotation',
+    androidIcon: 'lock_reset',
+    color: '#ef4444',
+  },
 ];
 
 export default function AdminDashboardScreen() {
@@ -151,7 +160,7 @@ export default function AdminDashboardScreen() {
               console.log("=== Admin Logout ===");
               console.log("Removing admin session...");
               
-              // Sign out from Supabase Auth
+              // Sign out from Supabase Auth (if any session exists)
               await supabase.auth.signOut();
               
               // Clear AsyncStorage
@@ -284,7 +293,8 @@ export default function AdminDashboardScreen() {
               - Use Zipcode Manager to add or update service area charges{'\n'}
               - Company Manager controls the dropdown in job request forms{'\n'}
               - Price Editor updates base pricing for all quotes{'\n'}
-              - Zipcode Analyzer helps identify coverage gaps
+              - Zipcode Analyzer helps identify coverage gaps{'\n'}
+              - Change Password to update your admin credentials
             </Text>
           </View>
         </View>
@@ -297,7 +307,7 @@ export default function AdminDashboardScreen() {
             color={colors.success} 
           />
           <Text style={styles.securityText}>
-            Your session is secured with email verification
+            Your session is secured with password authentication
           </Text>
         </View>
       </ScrollView>

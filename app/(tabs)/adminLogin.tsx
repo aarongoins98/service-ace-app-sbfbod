@@ -26,23 +26,14 @@ export default function AdminLoginScreen() {
   const router = useRouter();
   
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // Check if already logged in
     checkExistingSession();
   }, []);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (countdown > 0) {
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [countdown]);
 
   const checkExistingSession = async () => {
     try {
@@ -74,22 +65,29 @@ export default function AdminLoginScreen() {
     }
   };
 
-  const handleSendOTP = async () => {
-    console.log("=== Sending OTP ===");
+  const handleLogin = async () => {
+    console.log("=== Admin Login Attempt ===");
     
     if (!email || !email.includes('@')) {
       Alert.alert("Invalid Email", "Please enter a valid email address.");
       return;
     }
 
+    if (!password || password.length < 3) {
+      Alert.alert("Invalid Password", "Please enter your admin password.");
+      return;
+    }
+
     setIsLoading(true);
     
     try {
+      const emailLower = email.toLowerCase().trim();
+      
       // First, check if this email is in the admin_users table
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('email, is_active')
-        .eq('email', email.toLowerCase().trim())
+        .eq('email', emailLower)
         .eq('is_active', true)
         .single();
 
@@ -103,74 +101,42 @@ export default function AdminLoginScreen() {
         return;
       }
 
-      console.log("Admin email verified, sending OTP...");
+      console.log("Admin email verified, checking password...");
 
-      // Send OTP via Supabase Auth
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.toLowerCase().trim(),
-        options: {
-          shouldCreateUser: false, // Don't create new users
-        }
-      });
+      // Check password in admin_passwords table
+      const { data: passwordData, error: passwordError } = await supabase
+        .from('admin_passwords')
+        .select('email, password_hash, is_active')
+        .eq('email', emailLower)
+        .eq('is_active', true)
+        .single();
 
-      if (error) {
-        console.error("Error sending OTP:", error);
-        Alert.alert("Error", `Failed to send OTP: ${error.message}`);
+      if (passwordError || !passwordData) {
+        console.log("Password record not found");
+        Alert.alert(
+          "Login Failed", 
+          "No password set for this admin account. Please contact your administrator."
+        );
         setIsLoading(false);
         return;
       }
 
-      console.log("OTP sent successfully");
-      setOtpSent(true);
-      setCountdown(60); // 60 second cooldown
-      Alert.alert(
-        "OTP Sent", 
-        `A one-time password has been sent to ${email}. Please check your email and enter the code below.`
-      );
-    } catch (error) {
-      console.error("Error in handleSendOTP:", error);
-      Alert.alert("Error", "An unexpected error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async () => {
-    console.log("=== Verifying OTP ===");
-    
-    if (!otp || otp.length !== 6) {
-      Alert.alert("Invalid OTP", "Please enter the 6-digit code from your email.");
-      return;
-    }
-
-    setIsLoading(true);
-    
-    try {
-      // Verify OTP with Supabase Auth
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email.toLowerCase().trim(),
-        token: otp,
-        type: 'email'
-      });
-
-      if (error) {
-        console.error("Error verifying OTP:", error);
-        Alert.alert("Invalid Code", "The code you entered is incorrect or has expired. Please try again.");
+      // Simple password verification (in production, use proper bcrypt)
+      if (passwordData.password_hash !== password) {
+        console.log("Password mismatch");
+        Alert.alert(
+          "Invalid Password", 
+          "The password you entered is incorrect. Please try again."
+        );
         setIsLoading(false);
         return;
       }
 
-      if (!data.session) {
-        Alert.alert("Error", "Failed to create session. Please try again.");
-        setIsLoading(false);
-        return;
-      }
-
-      console.log("OTP verified successfully, creating admin session...");
+      console.log("Password verified successfully, creating admin session...");
 
       // Save admin session to AsyncStorage
       await AsyncStorage.setItem(ADMIN_SESSION_KEY, "true");
-      await AsyncStorage.setItem(ADMIN_EMAIL_KEY, email.toLowerCase().trim());
+      await AsyncStorage.setItem(ADMIN_EMAIL_KEY, emailLower);
       
       // Add delay for iOS
       if (Platform.OS === 'ios') {
@@ -187,34 +153,18 @@ export default function AdminLoginScreen() {
             text: "Continue",
             onPress: () => {
               setEmail("");
-              setOtp("");
-              setOtpSent(false);
+              setPassword("");
               router.replace("/(tabs)/adminDashboard");
             }
           }
         ]
       );
     } catch (error) {
-      console.error("Error in handleVerifyOTP:", error);
+      console.error("Error in handleLogin:", error);
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleResendOTP = () => {
-    if (countdown > 0) {
-      Alert.alert("Please Wait", `You can resend the code in ${countdown} seconds.`);
-      return;
-    }
-    setOtp("");
-    handleSendOTP();
-  };
-
-  const handleBackToEmail = () => {
-    setOtpSent(false);
-    setOtp("");
-    setCountdown(0);
   };
 
   return (
@@ -236,115 +186,72 @@ export default function AdminLoginScreen() {
             />
             <Text style={styles.title}>Admin Login</Text>
             <Text style={styles.subtitle}>
-              {otpSent 
-                ? "Enter the 6-digit code sent to your email"
-                : "Enter your admin email to receive a one-time password"
-              }
+              Enter your admin credentials to access the dashboard
             </Text>
           </View>
 
           <View style={styles.formContainer}>
-            {!otpSent ? (
-              <>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Admin Email *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="admin@yourcompany.com"
-                    placeholderTextColor={colors.textSecondary}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="email"
-                    editable={!isLoading}
-                  />
-                </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Admin Email *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="admin@yourcompany.com"
+                placeholderTextColor={colors.textSecondary}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                editable={!isLoading}
+              />
+            </View>
 
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password *</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Enter your password"
+                  placeholderTextColor={colors.textSecondary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!isLoading}
+                />
                 <TouchableOpacity 
-                  style={[styles.primaryButton, isLoading && styles.buttonDisabled]} 
-                  onPress={handleSendOTP}
-                  activeOpacity={0.8}
-                  disabled={isLoading}
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
                 >
                   <IconSymbol 
-                    ios_icon_name="envelope.fill" 
-                    android_material_icon_name="email" 
+                    ios_icon_name={showPassword ? "eye.slash.fill" : "eye.fill"} 
+                    android_material_icon_name={showPassword ? "visibility_off" : "visibility"} 
                     size={20} 
-                    color="#ffffff" 
+                    color={colors.textSecondary} 
                   />
-                  <Text style={styles.primaryButtonText}>
-                    {isLoading ? "Sending..." : "Send One-Time Password"}
-                  </Text>
                 </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <View style={styles.emailDisplay}>
-                  <IconSymbol 
-                    ios_icon_name="checkmark.circle.fill" 
-                    android_material_icon_name="check_circle" 
-                    size={20} 
-                    color={colors.success} 
-                  />
-                  <Text style={styles.emailDisplayText}>{email}</Text>
-                </View>
+              </View>
+            </View>
 
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>One-Time Password *</Text>
-                  <TextInput
-                    style={[styles.input, styles.otpInput]}
-                    placeholder="000000"
-                    placeholderTextColor={colors.textSecondary}
-                    value={otp}
-                    onChangeText={setOtp}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    autoFocus
-                    editable={!isLoading}
-                  />
-                </View>
-
-                <TouchableOpacity 
-                  style={[styles.primaryButton, isLoading && styles.buttonDisabled]} 
-                  onPress={handleVerifyOTP}
-                  activeOpacity={0.8}
-                  disabled={isLoading}
-                >
-                  <IconSymbol 
-                    ios_icon_name="lock.fill" 
-                    android_material_icon_name="lock" 
-                    size={20} 
-                    color="#ffffff" 
-                  />
-                  <Text style={styles.primaryButtonText}>
-                    {isLoading ? "Verifying..." : "Verify & Login"}
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={styles.otpActions}>
-                  <TouchableOpacity 
-                    style={styles.secondaryButton}
-                    onPress={handleResendOTP}
-                    disabled={countdown > 0}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.secondaryButtonText, countdown > 0 && styles.disabledText]}>
-                      {countdown > 0 ? `Resend in ${countdown}s` : "Resend Code"}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    style={styles.secondaryButton}
-                    onPress={handleBackToEmail}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.secondaryButtonText}>Change Email</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
+            <TouchableOpacity 
+              style={[styles.primaryButton, isLoading && styles.buttonDisabled]} 
+              onPress={handleLogin}
+              activeOpacity={0.8}
+              disabled={isLoading}
+            >
+              <IconSymbol 
+                ios_icon_name="lock.fill" 
+                android_material_icon_name="lock" 
+                size={20} 
+                color="#ffffff" 
+              />
+              <Text style={styles.primaryButtonText}>
+                {isLoading ? "Logging in..." : "Login to Admin Dashboard"}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.infoBox}>
@@ -355,10 +262,7 @@ export default function AdminLoginScreen() {
               color={colors.secondary} 
             />
             <Text style={styles.infoText}>
-              {otpSent 
-                ? "The code is valid for 60 minutes. Check your spam folder if you don't see the email."
-                : "Only authorized admin emails can access the admin dashboard. Contact your administrator if you need access."
-              }
+              Only authorized admin emails can access the admin dashboard. Contact your administrator if you need access or have forgotten your password.
             </Text>
           </View>
 
@@ -369,7 +273,20 @@ export default function AdminLoginScreen() {
               size={24} 
               color={colors.success} 
             />
-            <Text style={styles.securityText}>Secured with Email Verification</Text>
+            <Text style={styles.securityText}>Secured with Password Authentication</Text>
+          </View>
+
+          <View style={styles.defaultPasswordWarning}>
+            <IconSymbol 
+              ios_icon_name="exclamationmark.triangle.fill" 
+              android_material_icon_name="warning" 
+              size={20} 
+              color="#f59e0b" 
+            />
+            <Text style={styles.warningText}>
+              Default password: admin123{'\n'}
+              Please change this immediately after first login
+            </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -441,28 +358,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
-  otpInput: {
-    fontSize: 24,
-    fontWeight: '600',
-    textAlign: 'center',
-    letterSpacing: 8,
-  },
-  emailDisplay: {
+  passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.background,
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 20,
-    gap: 10,
     borderWidth: 1,
-    borderColor: colors.success,
+    borderColor: colors.border,
+    borderRadius: 8,
   },
-  emailDisplayText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
+  passwordInput: {
     flex: 1,
+    padding: 14,
+    fontSize: 16,
+    color: colors.text,
+  },
+  eyeButton: {
+    padding: 14,
   },
   primaryButton: {
     backgroundColor: colors.primary,
@@ -472,6 +383,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 8,
+    marginTop: 4,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -480,30 +392,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  otpActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    gap: 12,
-  },
-  secondaryButton: {
-    flex: 1,
-    padding: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  disabledText: {
-    color: colors.textSecondary,
   },
   infoBox: {
     flexDirection: 'row',
@@ -529,10 +417,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     padding: 12,
+    marginBottom: 16,
   },
   securityText: {
     fontSize: 13,
     fontWeight: '600',
     color: colors.success,
+  },
+  defaultPasswordWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#fef3c7',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#f59e0b',
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#92400e',
+    lineHeight: 18,
   },
 });
